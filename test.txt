@@ -1,0 +1,6 @@
+def neka_funkcija(param1, param2, param3):
+	a = 213
+	if a > 23:
+		print(65465)
+	else:
+		a = 12453.3535
