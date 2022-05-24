@@ -39,8 +39,8 @@
 ","		{ return _COMMA; }
 ":"		{ return _COLON; }
 
-"("     { return _LPARENT; }
-")"     { return _RPARENT; }
+"("     { return _LPAREN; }
+")"     { return _RPAREN; }
 "="		{ return _ASSIGN;}
 
 "+"     { return _PL;}
@@ -59,6 +59,8 @@
 [+]?[0-9]{1,10}     			{ return _INT; }
 [+]?[0-9]{0,9}"."[0-9]{1,9}     { return _FLOAT; }
 [+]?[0-9]{1,9}"."[0-9]{0,9}     { return _FLOAT; }
+["][^\n"]["]     				{ return _STRING; }
+['][^\n'][']     				{ return _STRING; }
 
 
 #.*               	{ /* skip */ }

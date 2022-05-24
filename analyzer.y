@@ -36,8 +36,8 @@
 %token _COMMA
 %token _COLON
 
-%token _LPARENT
-%token _RPARENT
+%token _LPAREN
+%token _RPAREN
 %token _ASSIGN
 
 %token _PL
@@ -55,20 +55,49 @@
 %token _ID
 %token _INT
 %token _FLOAT
+%token _STRING
 
 %%
 
-exp_list
+file
+	: statement_list
+	;
+
+statement_list
+	: /* empty */
+	| statement_list statement
+	;
+	
+statement
+	: compound_statement
+	| assign_statement
+	;
+
+compound_statement
+	: statement_list _NEW_LINE
+	| _INDENT statement_list _NEW_LINE
+	;
+	
+assign_statement
+	: _ID _ASSIGN num_exp _NEW_LINE
+	;
+  
+num_exp
 	: exp
-	| exp_list _NEW_LINE
-	| exp_list exp
+	/* ovde ce ici relacioni operator */
 	;
 
 exp
-	: _ID _ASSIGN _INT {printf("Izraz");}
-	| exp _PL _INT {printf("Plus");}
+	: literal
+	| _ID
+	| _LPAREN num_exp _RPAREN
 	;
 	
+literal
+	: _INT
+	| _FLOAT
+	| _STRING
+	;
 	
 %%
 

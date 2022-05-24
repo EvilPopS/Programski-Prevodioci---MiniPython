@@ -82,8 +82,8 @@ extern int yydebug;
     _WHILE = 283,                  /* _WHILE  */
     _COMMA = 284,                  /* _COMMA  */
     _COLON = 285,                  /* _COLON  */
-    _LPARENT = 286,                /* _LPARENT  */
-    _RPARENT = 287,                /* _RPARENT  */
+    _LPAREN = 286,                 /* _LPAREN  */
+    _RPAREN = 287,                 /* _RPAREN  */
     _ASSIGN = 288,                 /* _ASSIGN  */
     _PL = 289,                     /* _PL  */
     _MIN = 290,                    /* _MIN  */
@@ -97,7 +97,8 @@ extern int yydebug;
     _NEQ = 298,                    /* _NEQ  */
     _ID = 299,                     /* _ID  */
     _INT = 300,                    /* _INT  */
-    _FLOAT = 301                   /* _FLOAT  */
+    _FLOAT = 301,                  /* _FLOAT  */
+    _STRING = 302                  /* _STRING  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
