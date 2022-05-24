@@ -6,9 +6,8 @@
 
 %%
 " "+    			{ /* skip */ }
-[\n][ \t\n]*[\n]	{ return _NEW_LINE; }
+[\n][ \t\n]*	{ return _NEW_LINE; }
 
-[\n]+	{ return _NEW_LINE; }
 [\t]+	{ return _INDENT; }
 
 "and"       { return _AND; }

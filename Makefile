@@ -5,7 +5,7 @@ $(SRC): lex.yy.c $(SRC).tab.c
 	gcc -o $@ $+
 
 lex.yy.c: $(SRC).l $(SRC).tab.c
-	flex $<
+	flex -d $<
 
 $(SRC).tab.c: $(SRC).y
 	bison -d $<

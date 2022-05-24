@@ -1,9 +1,13 @@
 %{
   #include <stdio.h>
+  #include <err.h>
   int yylex(void);
   int yyparse(void);
-  int yyerror(char *);
+  int yyerror(const char *);
   extern int yylineno;
+  
+  int currIndentLvl = 0;
+  int indentCount = 0;
 %}
 
 %token _NEW_LINE
@@ -57,29 +61,50 @@
 %token _FLOAT
 %token _STRING
 
+%define parse.error verbose
 %%
 
 file
-	: statement_list
+	: /* empty */
+	| new_line_start
+	| statement_list _NEW_LINE
 	;
 
 statement_list
-	: /* empty */
-	| statement_list statement
+	: statement 
+	| statement_list statement 
 	;
-	
+
 statement
-	: compound_statement
-	| assign_statement
+	: simple_statement 
+		{
+			if (currIndentLvl != indentCount)
+				err(500, "Indentation error!");
+			indentCount = 0;
+		}
+	| new_line_start simple_statement
+	| compound_statement
+	| new_line_start compound_statement
+	;
+
+simple_statement
+	: assign_statement
 	;
 
 compound_statement
-	: statement_list _NEW_LINE
-	| _INDENT statement_list _NEW_LINE
+	: _RETURN
 	;
 	
 assign_statement
-	: _ID _ASSIGN num_exp _NEW_LINE
+	: _ID _ASSIGN num_exp 
+	; 
+
+new_line_start
+	: _NEW_LINE 
+	| new_line_start _INDENT
+		{
+			indentCount++;
+		}
 	;
   
 num_exp
@@ -94,10 +119,10 @@ exp
 	;
 	
 literal
-	: _INT
+	: _INT 
 	| _FLOAT
 	| _STRING
-	;
+	; 
 	
 %%
 
@@ -105,6 +130,6 @@ int main() {
   yyparse();
 }
 
-int yyerror(char *s) {
+int yyerror(const char *s) {
   fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);
 } 
