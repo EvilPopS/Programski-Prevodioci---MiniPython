@@ -87,11 +87,13 @@ extern int yydebug;
     _RPAREN = 288,                 /* _RPAREN  */
     _ASSIGN = 289,                 /* _ASSIGN  */
     _AROP = 290,                   /* _AROP  */
-    _RELOP = 291,                  /* _RELOP  */
-    _ID = 292,                     /* _ID  */
-    _INT = 293,                    /* _INT  */
-    _FLOAT = 294,                  /* _FLOAT  */
-    _STRING = 295                  /* _STRING  */
+    _LOP = 291,                    /* _LOP  */
+    _RELOP = 292,                  /* _RELOP  */
+    _ID = 293,                     /* _ID  */
+    _INT = 294,                    /* _INT  */
+    _FLOAT = 295,                  /* _FLOAT  */
+    _STRING = 296,                 /* _STRING  */
+    _BOOL = 297                    /* _BOOL  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -105,7 +107,7 @@ union YYSTYPE
   int i;
   char *s;
 
-#line 109 "analyzer.tab.h"
+#line 111 "analyzer.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

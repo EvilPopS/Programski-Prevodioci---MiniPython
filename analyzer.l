@@ -13,17 +13,13 @@
 %}
 
 %%
-	{
-		printf("retIndent: %d i retDedent: %d\n", retIndent, retDedent);
-		printf("prevIndentLvl: %d i curIndentLvl: %d\n", prevIndentLvl, curIndentLvl);
+	{;
 		if (retIndent > 0) {
 			retIndent--;
-			printf("INDENT\n");
 			return _INDENT;
 		}
 		else if (retDedent > 0) {
 			retDedent--;
-			printf("DEDENT\n");
 			return _DEDENT;
 		}
 	}
@@ -31,7 +27,6 @@
 " "+    				{ /* skip */ }
 
 [\n][ \n\t]*[\n]		{ 
-				  			printf("NEW LINE\n");
 						  if (prevIndentLvl > 0) {
 				  			retDedent = prevIndentLvl;
 				  			prevIndentLvl = 0;
@@ -43,60 +38,51 @@
 
 [\n][ \n\t]*[\n][\t]+	{
 						  int ind = strlen(yytext)-1;
-						  while (yytext[ind] == '\t')
+						  while (yytext[ind] == '\t') {
+						  	ind --;
 						  	curIndentLvl++;
+						  }
 
-				  			printf("NEW LINE\n");
 				  		  if (prevIndentLvl < curIndentLvl) {
 				  			retIndent = curIndentLvl - prevIndentLvl;
 					  	  	prevIndentLvl = curIndentLvl;
 					  	  	curIndentLvl = 0;
-				  			return _NEW_LINE;
 					  	  } 
 				  	  	  else if (prevIndentLvl > curIndentLvl) {
 				  	  		retDedent = prevIndentLvl - curIndentLvl;
 				  	  		prevIndentLvl = curIndentLvl;
 					  	  	curIndentLvl = 0;
-				  	  		return _NEW_LINE;
 				  	  	  }
-				  	  	  else {
-				  	  		return _NEW_LINE;
-				  	  	  }
+				  		  
+				  		  return _NEW_LINE;
 						}					
  
 
 [\n]	    { 
-	  			printf("NEW LINE\n");
 			  if (prevIndentLvl > 0) {
 	  			retDedent = prevIndentLvl;
 	  			prevIndentLvl = 0;
-	  			return _NEW_LINE;
 		  	  } 
-	  	  	  else 
-	  	  		return _NEW_LINE;
+	  	  	  
+	  	  	  return _NEW_LINE;
 			}
 
 [\n][\t]+   {   
 			  curIndentLvl = strlen(yytext)-1;
-	  			printf("NEW LINE\n");
 	  		  if (prevIndentLvl < curIndentLvl) {
 	  			retIndent = curIndentLvl - prevIndentLvl;
 		  	  	prevIndentLvl = curIndentLvl;
 		  	  	curIndentLvl = 0;
-	  			return _NEW_LINE;
 		  	  } 
 	  	  	  else if (prevIndentLvl > curIndentLvl) {
 	  	  		retDedent = prevIndentLvl - curIndentLvl;
 	  	  		prevIndentLvl = curIndentLvl;
 		  	  	curIndentLvl = 0;
-	  	  		return _NEW_LINE;
 	  	  	  }
-	  	  	  else {
-	  	  		return _NEW_LINE;
-	  	  	  }
+	  	  	  return _NEW_LINE;
 	  	    }
 
-"and"       { return _AND; }
+"and"       { yylval.i = AND; return _LOP;}
 "as"        { return _AS; }
 "break"     { return _BREAK; }
 "continue"  { return _CONTINUE; }
@@ -114,7 +100,7 @@
 "is"        { return _IS; }
 "None"      { return _NONE; }
 "not"       { return _NOT; }
-"or"        { return _OR; }
+"or"        { yylval.i = OR; return _LOP; }
 "pass"      { return _PASS; }
 "return"    { return _RETURN;}
 "True"      { return _TRUE; }

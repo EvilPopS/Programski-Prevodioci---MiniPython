@@ -36,14 +36,10 @@
 %token _LPAREN _RPAREN
 %token _ASSIGN
 
-%token _AROP
-
-%token _RELOP
+%token _AROP _LOP _RELOP
 
 %token _ID
-%token _INT
-%token _FLOAT
-%token _STRING
+%token _INT _FLOAT _STRING _BOOL
 
 %define parse.error verbose
 %%
@@ -80,7 +76,7 @@ if_statement
 	;
 
 if_part
-	: _IF rel_exp _COLON _NEW_LINE body
+	: _IF num_exp _COLON _NEW_LINE body
 	;
 	
 elif_part
@@ -89,7 +85,7 @@ elif_part
 	;
 
 elif_statement
-	: _ELIF rel_exp _COLON _NEW_LINE body
+	: _ELIF num_exp _COLON _NEW_LINE body
 	;
 	
 else_part
@@ -101,16 +97,18 @@ body
 	: _INDENT statement_list _DEDENT
 	;
 		
-rel_exp
-	: num_exp _RELOP num_exp
-	;
-  
 num_exp
-	: exp
-	| num_exp _AROP exp
-	/* Ja mislim da treba i za _RELOP jer to vraca boolean tip */
+	: negation exp
+	| num_exp _AROP negation exp
+	| num_exp _LOP negation exp
+	| num_exp _RELOP negation exp
 	;
 
+negation
+	: /* no negation */
+	| negation _NOT
+	;
+	
 exp
 	: literal
 	| _ID
@@ -121,6 +119,7 @@ literal
 	: _INT 
 	| _FLOAT
 	| _STRING
+	| _BOOL
 	;
 	
 %%

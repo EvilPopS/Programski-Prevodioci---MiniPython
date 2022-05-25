@@ -1,15 +1,18 @@
 a = "as" 
 a = 135
 a = 3
-if a < 3:
+if a < 3 and not 2 + 3 > 4 or not not not not 2 < 3:
 	a = 31
-elif b > 3:
+elif not b > 3:
 	a = 34
 	if v < 32:
 		a = 2
 	elif b > 3:
 		b = 3
+		
+		  
 	elif c == 2:
 		c = 3
 	else:
 		c = 3
+
