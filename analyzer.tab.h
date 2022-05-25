@@ -56,56 +56,59 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     _NEW_LINE = 258,               /* _NEW_LINE  */
     _INDENT = 259,                 /* _INDENT  */
-    _AND = 260,                    /* _AND  */
-    _AS = 261,                     /* _AS  */
-    _BREAK = 262,                  /* _BREAK  */
-    _CONTINUE = 263,               /* _CONTINUE  */
-    _DEF = 264,                    /* _DEF  */
-    _ELIF = 265,                   /* _ELIF  */
-    _ELSE = 266,                   /* _ELSE  */
-    _EXCEPT = 267,                 /* _EXCEPT  */
-    _FINALLY = 268,                /* _FINALLY  */
-    _FALSE = 269,                  /* _FALSE  */
-    _FOR = 270,                    /* _FOR  */
-    _FROM = 271,                   /* _FROM  */
-    _IF = 272,                     /* _IF  */
-    _IMPORT = 273,                 /* _IMPORT  */
-    _IN = 274,                     /* _IN  */
-    _IS = 275,                     /* _IS  */
-    _NONE = 276,                   /* _NONE  */
-    _NOT = 277,                    /* _NOT  */
-    _OR = 278,                     /* _OR  */
-    _PASS = 279,                   /* _PASS  */
-    _RETURN = 280,                 /* _RETURN  */
-    _TRUE = 281,                   /* _TRUE  */
-    _TRY = 282,                    /* _TRY  */
-    _WHILE = 283,                  /* _WHILE  */
-    _COMMA = 284,                  /* _COMMA  */
-    _COLON = 285,                  /* _COLON  */
-    _LPAREN = 286,                 /* _LPAREN  */
-    _RPAREN = 287,                 /* _RPAREN  */
-    _ASSIGN = 288,                 /* _ASSIGN  */
-    _PL = 289,                     /* _PL  */
-    _MIN = 290,                    /* _MIN  */
-    _MUL = 291,                    /* _MUL  */
-    _DIV = 292,                    /* _DIV  */
-    _LS = 293,                     /* _LS  */
-    _GR = 294,                     /* _GR  */
-    _LS_EQ = 295,                  /* _LS_EQ  */
-    _GR_EQ = 296,                  /* _GR_EQ  */
-    _EQ = 297,                     /* _EQ  */
-    _NEQ = 298,                    /* _NEQ  */
-    _ID = 299,                     /* _ID  */
-    _INT = 300,                    /* _INT  */
-    _FLOAT = 301,                  /* _FLOAT  */
-    _STRING = 302                  /* _STRING  */
+    _DEDENT = 260,                 /* _DEDENT  */
+    _AND = 261,                    /* _AND  */
+    _AS = 262,                     /* _AS  */
+    _BREAK = 263,                  /* _BREAK  */
+    _CONTINUE = 264,               /* _CONTINUE  */
+    _DEF = 265,                    /* _DEF  */
+    _ELIF = 266,                   /* _ELIF  */
+    _ELSE = 267,                   /* _ELSE  */
+    _EXCEPT = 268,                 /* _EXCEPT  */
+    _FINALLY = 269,                /* _FINALLY  */
+    _FALSE = 270,                  /* _FALSE  */
+    _FOR = 271,                    /* _FOR  */
+    _FROM = 272,                   /* _FROM  */
+    _IF = 273,                     /* _IF  */
+    _IMPORT = 274,                 /* _IMPORT  */
+    _IN = 275,                     /* _IN  */
+    _IS = 276,                     /* _IS  */
+    _NONE = 277,                   /* _NONE  */
+    _NOT = 278,                    /* _NOT  */
+    _OR = 279,                     /* _OR  */
+    _PASS = 280,                   /* _PASS  */
+    _RETURN = 281,                 /* _RETURN  */
+    _TRUE = 282,                   /* _TRUE  */
+    _TRY = 283,                    /* _TRY  */
+    _WHILE = 284,                  /* _WHILE  */
+    _COMMA = 285,                  /* _COMMA  */
+    _COLON = 286,                  /* _COLON  */
+    _LPAREN = 287,                 /* _LPAREN  */
+    _RPAREN = 288,                 /* _RPAREN  */
+    _ASSIGN = 289,                 /* _ASSIGN  */
+    _AROP = 290,                   /* _AROP  */
+    _RELOP = 291,                  /* _RELOP  */
+    _ID = 292,                     /* _ID  */
+    _INT = 293,                    /* _INT  */
+    _FLOAT = 294,                  /* _FLOAT  */
+    _STRING = 295                  /* _STRING  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+union YYSTYPE
+{
+#line 13 "analyzer.y"
+
+  int i;
+  char *s;
+
+#line 109 "analyzer.tab.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

@@ -1,14 +1,100 @@
-%option noyywrap
+%option noyywrap yylineno
 
 %{
    #include "analyzer.tab.h"
+   #include "defs.h"
+   #include <stdbool.h>
+   
+  int prevIndentLvl = 0;
+  int curIndentLvl = 0;
+  
+  int retDedent = 0;
+  int retIndent = 0; 
 %}
 
 %%
-" "+    			{ /* skip */ }
-[\n][ \t\n]*	{ return _NEW_LINE; }
+	{
+		printf("retIndent: %d i retDedent: %d\n", retIndent, retDedent);
+		printf("prevIndentLvl: %d i curIndentLvl: %d\n", prevIndentLvl, curIndentLvl);
+		if (retIndent > 0) {
+			retIndent--;
+			printf("INDENT\n");
+			return _INDENT;
+		}
+		else if (retDedent > 0) {
+			retDedent--;
+			printf("DEDENT\n");
+			return _DEDENT;
+		}
+	}
 
-[\t]+	{ return _INDENT; }
+" "+    				{ /* skip */ }
+
+[\n][ \n\t]*[\n]		{ 
+				  			printf("NEW LINE\n");
+						  if (prevIndentLvl > 0) {
+				  			retDedent = prevIndentLvl;
+				  			prevIndentLvl = 0;
+				  			return _NEW_LINE;
+					  	  } 
+				  	  	  else 
+				  	  		return _NEW_LINE;
+						}
+
+[\n][ \n\t]*[\n][\t]+	{
+						  int ind = strlen(yytext)-1;
+						  while (yytext[ind] == '\t')
+						  	curIndentLvl++;
+
+				  			printf("NEW LINE\n");
+				  		  if (prevIndentLvl < curIndentLvl) {
+				  			retIndent = curIndentLvl - prevIndentLvl;
+					  	  	prevIndentLvl = curIndentLvl;
+					  	  	curIndentLvl = 0;
+				  			return _NEW_LINE;
+					  	  } 
+				  	  	  else if (prevIndentLvl > curIndentLvl) {
+				  	  		retDedent = prevIndentLvl - curIndentLvl;
+				  	  		prevIndentLvl = curIndentLvl;
+					  	  	curIndentLvl = 0;
+				  	  		return _NEW_LINE;
+				  	  	  }
+				  	  	  else {
+				  	  		return _NEW_LINE;
+				  	  	  }
+						}					
+ 
+
+[\n]	    { 
+	  			printf("NEW LINE\n");
+			  if (prevIndentLvl > 0) {
+	  			retDedent = prevIndentLvl;
+	  			prevIndentLvl = 0;
+	  			return _NEW_LINE;
+		  	  } 
+	  	  	  else 
+	  	  		return _NEW_LINE;
+			}
+
+[\n][\t]+   {   
+			  curIndentLvl = strlen(yytext)-1;
+	  			printf("NEW LINE\n");
+	  		  if (prevIndentLvl < curIndentLvl) {
+	  			retIndent = curIndentLvl - prevIndentLvl;
+		  	  	prevIndentLvl = curIndentLvl;
+		  	  	curIndentLvl = 0;
+	  			return _NEW_LINE;
+		  	  } 
+	  	  	  else if (prevIndentLvl > curIndentLvl) {
+	  	  		retDedent = prevIndentLvl - curIndentLvl;
+	  	  		prevIndentLvl = curIndentLvl;
+		  	  	curIndentLvl = 0;
+	  	  		return _NEW_LINE;
+	  	  	  }
+	  	  	  else {
+	  	  		return _NEW_LINE;
+	  	  	  }
+	  	    }
 
 "and"       { return _AND; }
 "as"        { return _AS; }
@@ -42,28 +128,27 @@
 ")"     { return _RPAREN; }
 "="		{ return _ASSIGN;}
 
-"+"     { return _PL;}
-"-"     { return _MIN; }
-"*"		{ return _MUL; }
-"/"		{ return _DIV; }
+"+"     { yylval.i = ADD; return _AROP;}
+"-"     { yylval.i = SUB; return _AROP; }
+"*"		{ yylval.i = MUL; return _AROP; }
+"/"		{ yylval.i = DIV; return _AROP; }
 
-"<"     { return _LS; }
-">"     { return _GR; }
-"<="    { return _LS_EQ; }
-">="    { return _GR_EQ; }
-"=="    { return _EQ; }
-"!="    { return _NEQ; }
+"<"     { yylval.i = LS;   return _RELOP; }
+">"     { yylval.i = GR;   return _RELOP; }
+"<="    { yylval.i = LSEQ; return _RELOP; }
+">="    { yylval.i = GREQ; return _RELOP; }
+"=="    { yylval.i = EQ;   return _RELOP; }
+"!="    { yylval.i = NEQ;  return _RELOP; }
 
-[a-zA-Z_][a-zA-Z0-9_]* 			{ return _ID; }
-[+]?[0-9]{1,10}     			{ return _INT; }
-[+]?[0-9]{0,9}"."[0-9]{1,9}     { return _FLOAT; }
-[+]?[0-9]{1,9}"."[0-9]{0,9}     { return _FLOAT; }
-["][^\n"]["]     				{ return _STRING; }
-['][^\n'][']     				{ return _STRING; }
+[a-zA-Z_][a-zA-Z0-9_]* 			{ yylval.s = strdup(yytext); return _ID; }
+[+]?[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _INT; }
+[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _FLOAT; }
+[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _FLOAT; }
+\".*\"     						{ yylval.s = strdup(yytext); return _STRING; }
+\'.*\'     						{ yylval.s = strdup(yytext); return _STRING; }
 
-
-#.*               	{ /* skip */ }
-.                    	{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
+#.*			{ /* skip */ }
+.			{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
 
 %%
 
