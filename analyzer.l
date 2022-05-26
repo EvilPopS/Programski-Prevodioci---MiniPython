@@ -104,7 +104,6 @@
 \".*\"     						{ yylval.s = strdup(yytext); return _STRING; }
 \'.*\'     						{ yylval.s = strdup(yytext); return _STRING; }
 
-#.*			{ /* skip */ }
 .			{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
 
 %%

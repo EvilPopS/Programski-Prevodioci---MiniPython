@@ -1,12 +1,20 @@
 %{
   #include <stdio.h>
   #include <err.h>
+  #include <stdbool.h>
+  
   int yylex(void);
   int yyparse(void);
   int yyerror(const char *);
+  void throwErr(const char *);
   extern int yylineno;
+  char startErrMess[] = "Error on line: " ;
   
+  // Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
+  int loopCounter = 0;
   
+  // Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
+  bool valuedParamDef = false;
 %}
 
 %union {
@@ -50,6 +58,7 @@
 file
 	: /* empty */ 
 	| statement_list
+	| _NEW_LINE statement_list
 	;
 
 statement_list
@@ -66,8 +75,16 @@ simple_statement
 	: assign_statement
 	| return_statement
 	| function_call
-	| _BREAK /* postavicemo counter za while loop koji broji u koliko petlji se nalazi kompajler i dok nije 0 moze da stoji break*/
-	| _CONTINUE /* isto ko za break, isti brojac */
+	| _BREAK
+		{
+			if (loopCounter == 0)
+				throwErr("'break' must be inside while statement!");
+		}
+	| _CONTINUE
+		{
+			if (loopCounter == 0)
+				throwErr("'continue' must be inside while statement!");
+		}
 	| _PASS
 	;
 
@@ -105,12 +122,23 @@ function_def
 	: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE body
 	;
 
-parameters  					// Za ovo ce morati da ide provera da li je bio default param i ako jeste, ne moze nista drugo sem njega 
+parameters 
 	: /* no params */
 	| _ID 
-	| _ID _ASSIGN num_exp
-	| parameters _COMMA _ID  
-	| parameters _COMMA _ID _ASSIGN num_exp
+	| param_with_default_val
+	| parameters _COMMA _ID
+		{
+			if (valuedParamDef)
+				throwErr("Parameters without default values cannot be defined after parameter with set default value.");
+		}
+	| parameters _COMMA param_with_default_val
+	;
+	
+param_with_default_val
+	: _ID _ASSIGN num_exp
+		{
+			valuedParamDef = true;
+		}
 	;
 
 if_statement
@@ -131,7 +159,14 @@ while_statement
 	;
 
 while_part
-	: _WHILE num_exp _COLON _NEW_LINE body
+	: _WHILE num_exp _COLON _NEW_LINE 
+		{
+			loopCounter++;
+		}
+	  body
+		{
+			loopCounter--;
+		}
 	;
 
 try_except_statement
@@ -205,3 +240,7 @@ int main() {
 int yyerror(const char *s) {
   fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);
 } 
+
+void throwErr(const char* mess) {
+	err(500, "%s%d >> %s", startErrMess, yylineno, mess);
+}

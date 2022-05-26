@@ -23,7 +23,7 @@ extern int yyerror(char *s);
 
 
 //tipovi podataka
-enum types { NO_TYPE, INT, FLOAT, STRING };
+enum types { NONE, INT, FLOAT, STRING };
 
 //vrste simbola (moze ih biti maksimalno 32)
 enum kinds { NO_KIND = 0x1, REG = 0x2, LIT = 0x4, 
