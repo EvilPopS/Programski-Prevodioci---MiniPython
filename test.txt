@@ -43,3 +43,18 @@ else:
 	finally:
 		a = 2
 
+
+def abrakadabra():
+	return
+	
+def abrakadabra(a):
+	return 2 + 3 * func()
+def abrakadabra(a, b=a, b, d):
+	pass
+	
+blabla()
+blabla(123+2)
+blabla(1, 24/2, b())
+
+
+

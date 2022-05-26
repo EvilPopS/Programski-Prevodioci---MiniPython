@@ -8,7 +8,7 @@ lex.yy.c: $(SRC).l $(SRC).tab.c
 	flex -d $<
 
 $(SRC).tab.c: $(SRC).y
-	bison -d -Wcounterexamples $<
+	bison -d -Wcounterexamples -Wconflicts-sr $<
 
 clean:
 	rm -f lex.yy.c

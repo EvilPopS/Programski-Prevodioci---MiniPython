@@ -58,16 +58,14 @@
 	  	    }
 
 "and"       { yylval.i = AND; return _LOP;}
-"as"        { return _AS; }
 "break"     { return _BREAK; }
 "continue"  { return _CONTINUE; }
-"def"       { return _DEF; }
+"def"       { return _DEF; }  // jos uvek nije impl
 "elif"      { return _ELIF; }
 "else"      { return _ELSE; }
 "except"    { return _EXCEPT; }
 "finally"   { return _FINALLY; }
 "False"     { return _BOOL; }
-"for"       { return _FOR; }
 "if"        { return _IF; }
 "in"        { return _IN; }
 "is"        { yylval.i = IS; return _RELOP; }
