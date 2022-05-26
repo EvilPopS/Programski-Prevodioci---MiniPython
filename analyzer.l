@@ -5,6 +5,9 @@
    #include "defs.h"
    #include <stdbool.h>
    
+  void resetIndentation();
+  void incOrdDecIndentation();
+  
   int prevIndentLvl = 0;
   int curIndentLvl = 0;
   
@@ -27,59 +30,31 @@
 " "+    				{ /* skip */ }
 
 [\n][ \n\t]*[\n]		{ 
-						  if (prevIndentLvl > 0) {
-				  			retDedent = prevIndentLvl;
-				  			prevIndentLvl = 0;
-				  			return _NEW_LINE;
-					  	  } 
-				  	  	  else 
-				  	  		return _NEW_LINE;
+							resetIndentation();	  	  	  
+				  	  	    return _NEW_LINE;
 						}
 
 [\n][ \n\t]*[\n][\t]+	{
-						  int ind = strlen(yytext)-1;
-						  while (yytext[ind] == '\t') {
-						  	ind --;
-						  	curIndentLvl++;
-						  }
+							int ind = strlen(yytext)-1;
+							while (yytext[ind] == '\t') {
+								ind --;
+								curIndentLvl++;
+							}
 
-				  		  if (prevIndentLvl < curIndentLvl) {
-				  			retIndent = curIndentLvl - prevIndentLvl;
-					  	  	prevIndentLvl = curIndentLvl;
-					  	  	curIndentLvl = 0;
-					  	  } 
-				  	  	  else if (prevIndentLvl > curIndentLvl) {
-				  	  		retDedent = prevIndentLvl - curIndentLvl;
-				  	  		prevIndentLvl = curIndentLvl;
-					  	  	curIndentLvl = 0;
-				  	  	  }
-				  		  
-				  		  return _NEW_LINE;
+							incOrdDecIndentation();
+				  	  		return _NEW_LINE;
 						}					
  
 
 [\n]	    { 
-			  if (prevIndentLvl > 0) {
-	  			retDedent = prevIndentLvl;
-	  			prevIndentLvl = 0;
-		  	  } 
-	  	  	  
-	  	  	  return _NEW_LINE;
+				resetIndentation();	  	  	  
+	  	  	    return _NEW_LINE;
 			}
 
 [\n][\t]+   {   
-			  curIndentLvl = strlen(yytext)-1;
-	  		  if (prevIndentLvl < curIndentLvl) {
-	  			retIndent = curIndentLvl - prevIndentLvl;
-		  	  	prevIndentLvl = curIndentLvl;
-		  	  	curIndentLvl = 0;
-		  	  } 
-	  	  	  else if (prevIndentLvl > curIndentLvl) {
-	  	  		retDedent = prevIndentLvl - curIndentLvl;
-	  	  		prevIndentLvl = curIndentLvl;
-		  	  	curIndentLvl = 0;
-	  	  	  }
-	  	  	  return _NEW_LINE;
+				curIndentLvl = strlen(yytext)-1;
+				incOrdDecIndentation();
+	  	  		return _NEW_LINE;
 	  	    }
 
 "and"       { yylval.i = AND; return _LOP;}
@@ -91,19 +66,17 @@
 "else"      { return _ELSE; }
 "except"    { return _EXCEPT; }
 "finally"   { return _FINALLY; }
-"False"     { return _FALSE; }
+"False"     { return _BOOL; }
 "for"       { return _FOR; }
-"from"      { return _FROM; }
 "if"        { return _IF; }
-"import"    { return _IMPORT; }
 "in"        { return _IN; }
-"is"        { return _IS; }
+"is"        { yylval.i = IS; return _RELOP; }
 "None"      { return _NONE; }
 "not"       { return _NOT; }
 "or"        { yylval.i = OR; return _LOP; }
 "pass"      { return _PASS; }
 "return"    { return _RETURN;}
-"True"      { return _TRUE; }
+"True"      { return _BOOL; }
 "try"       { return _TRY; }
 "while"   	{ return _WHILE; }
 	
@@ -137,4 +110,26 @@
 .			{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
 
 %%
+
+void resetIndentation() {
+	if (prevIndentLvl > 0) {
+		retDedent = prevIndentLvl;
+		prevIndentLvl = 0;
+	} 
+}
+
+void incOrdDecIndentation() {
+	if (prevIndentLvl < curIndentLvl) {
+		retIndent = curIndentLvl - prevIndentLvl;
+		prevIndentLvl = curIndentLvl;
+		curIndentLvl = 0;
+	} 
+	else if (prevIndentLvl > curIndentLvl) {
+		retDedent = prevIndentLvl - curIndentLvl;
+		prevIndentLvl = curIndentLvl;
+		curIndentLvl = 0;
+	}
+}
+
+
 

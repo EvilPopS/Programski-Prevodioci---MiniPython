@@ -68,32 +68,30 @@ extern int yydebug;
     _FINALLY = 269,                /* _FINALLY  */
     _FALSE = 270,                  /* _FALSE  */
     _FOR = 271,                    /* _FOR  */
-    _FROM = 272,                   /* _FROM  */
-    _IF = 273,                     /* _IF  */
-    _IMPORT = 274,                 /* _IMPORT  */
-    _IN = 275,                     /* _IN  */
-    _IS = 276,                     /* _IS  */
-    _NONE = 277,                   /* _NONE  */
-    _NOT = 278,                    /* _NOT  */
-    _OR = 279,                     /* _OR  */
-    _PASS = 280,                   /* _PASS  */
-    _RETURN = 281,                 /* _RETURN  */
-    _TRUE = 282,                   /* _TRUE  */
-    _TRY = 283,                    /* _TRY  */
-    _WHILE = 284,                  /* _WHILE  */
-    _COMMA = 285,                  /* _COMMA  */
-    _COLON = 286,                  /* _COLON  */
-    _LPAREN = 287,                 /* _LPAREN  */
-    _RPAREN = 288,                 /* _RPAREN  */
-    _ASSIGN = 289,                 /* _ASSIGN  */
-    _AROP = 290,                   /* _AROP  */
-    _LOP = 291,                    /* _LOP  */
-    _RELOP = 292,                  /* _RELOP  */
-    _ID = 293,                     /* _ID  */
-    _INT = 294,                    /* _INT  */
-    _FLOAT = 295,                  /* _FLOAT  */
-    _STRING = 296,                 /* _STRING  */
-    _BOOL = 297                    /* _BOOL  */
+    _IF = 272,                     /* _IF  */
+    _IN = 273,                     /* _IN  */
+    _IS = 274,                     /* _IS  */
+    _NONE = 275,                   /* _NONE  */
+    _NOT = 276,                    /* _NOT  */
+    _OR = 277,                     /* _OR  */
+    _PASS = 278,                   /* _PASS  */
+    _RETURN = 279,                 /* _RETURN  */
+    _TRUE = 280,                   /* _TRUE  */
+    _TRY = 281,                    /* _TRY  */
+    _WHILE = 282,                  /* _WHILE  */
+    _COMMA = 283,                  /* _COMMA  */
+    _COLON = 284,                  /* _COLON  */
+    _LPAREN = 285,                 /* _LPAREN  */
+    _RPAREN = 286,                 /* _RPAREN  */
+    _ASSIGN = 287,                 /* _ASSIGN  */
+    _AROP = 288,                   /* _AROP  */
+    _LOP = 289,                    /* _LOP  */
+    _RELOP = 290,                  /* _RELOP  */
+    _ID = 291,                     /* _ID  */
+    _INT = 292,                    /* _INT  */
+    _FLOAT = 293,                  /* _FLOAT  */
+    _STRING = 294,                 /* _STRING  */
+    _BOOL = 295                    /* _BOOL  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -107,7 +105,7 @@ union YYSTYPE
   int i;
   char *s;
 
-#line 111 "analyzer.tab.h"
+#line 109 "analyzer.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

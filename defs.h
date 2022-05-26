@@ -36,7 +36,7 @@ enum arops { ADD, SUB, MUL, DIV};
 enum lops {AND, OR};
 
 //konstante relacionih operatora
-enum relops { LS, GR, LSEQ, GREQ, EQ, NEQ, RELOP_NUMBER };
+enum relops { LS, GR, LSEQ, GREQ, EQ, NEQ, IS };
 
 #endif
 

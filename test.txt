@@ -5,14 +5,41 @@ if a < 3 and not 2 + 3 > 4 or not not not not 2 < 3:
 	a = 31
 elif not b > 3:
 	a = 34
+	while a < 4:
+		a = a + 1
+	
 	if v < 32:
 		a = 2
 	elif b > 3:
 		b = 3
 		
 		  
-	elif c == 2:
+	elif not c is not None:
 		c = 3
 	else:
 		c = 3
+
+	while True or False:
+		a = a + 1
+	else:
+		a = 2 * 3
+		b = b / 2
+	
+try:
+	a = 1
+except Exception1:
+	a = 2
+else:
+	a = 2
+
+	try:
+		a = 1
+	except Exception1:
+		a = 2
+	except Exception2:
+		a = 2
+	except:
+		a = 2
+	finally:
+		a = 2
 
