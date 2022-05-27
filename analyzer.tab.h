@@ -68,28 +68,25 @@ extern int yydebug;
     _FOR = 269,                    /* _FOR  */
     _IF = 270,                     /* _IF  */
     _IN = 271,                     /* _IN  */
-    _IS = 272,                     /* _IS  */
-    _NONE = 273,                   /* _NONE  */
-    _NOT = 274,                    /* _NOT  */
-    _OR = 275,                     /* _OR  */
-    _PASS = 276,                   /* _PASS  */
-    _RETURN = 277,                 /* _RETURN  */
-    _TRY = 278,                    /* _TRY  */
-    _WHILE = 279,                  /* _WHILE  */
-    _COMMA = 280,                  /* _COMMA  */
-    _COLON = 281,                  /* _COLON  */
-    _LPAREN = 282,                 /* _LPAREN  */
-    _RPAREN = 283,                 /* _RPAREN  */
-    _ASSIGN = 284,                 /* _ASSIGN  */
-    _AROP = 285,                   /* _AROP  */
-    _LOP = 286,                    /* _LOP  */
-    _RELOP = 287,                  /* _RELOP  */
-    _ID = 288,                     /* _ID  */
-    _INT = 289,                    /* _INT  */
-    _FLOAT = 290,                  /* _FLOAT  */
-    _STRING = 291,                 /* _STRING  */
-    _BOOL = 292,                   /* _BOOL  */
-    VAR_ID = 293                   /* VAR_ID  */
+    _NOT = 272,                    /* _NOT  */
+    _OR = 273,                     /* _OR  */
+    _PASS = 274,                   /* _PASS  */
+    _RETURN = 275,                 /* _RETURN  */
+    _TRY = 276,                    /* _TRY  */
+    _WHILE = 277,                  /* _WHILE  */
+    _COMMA = 278,                  /* _COMMA  */
+    _COLON = 279,                  /* _COLON  */
+    _LPAREN = 280,                 /* _LPAREN  */
+    _RPAREN = 281,                 /* _RPAREN  */
+    _ASSIGN = 282,                 /* _ASSIGN  */
+    _AROP = 283,                   /* _AROP  */
+    _LOP = 284,                    /* _LOP  */
+    _RELOP = 285,                  /* _RELOP  */
+    _ID = 286,                     /* _ID  */
+    _NUM_BOOL = 287,               /* _NUM_BOOL  */
+    _STRING = 288,                 /* _STRING  */
+    _NONE = 289,                   /* _NONE  */
+    VAR_ID = 290                   /* VAR_ID  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -98,12 +95,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 20 "analyzer.y"
+#line 27 "analyzer.y"
 
   int i;
   char *s;
 
-#line 107 "analyzer.tab.h"
+#line 104 "analyzer.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -1,5 +1,9 @@
-def a(a=2 ,b=2 , v=2): 
-	pass
+a = 1 + 3
+b = "asfas" * 2
+d = 1 * True
+a = False - 1 / True + 23
+b = "asfa" - 2
+v = 1 / ""
 
-
+v = None + 1
 

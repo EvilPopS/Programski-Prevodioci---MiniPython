@@ -65,16 +65,16 @@
 "else"      { return _ELSE; }
 "except"    { return _EXCEPT; }
 "finally"   { return _FINALLY; }
-"False"     { return _BOOL; }
+"False"     { yylval.s = strdup(yytext); return _NUM_BOOL; }
 "if"        { return _IF; }
 "in"        { return _IN; }
 "is"        { yylval.i = IS; return _RELOP; }
-"None"      { return _NONE; }
+"None"      { yylval.s = strdup(yytext); return _NONE; }
 "not"       { return _NOT; }
 "or"        { yylval.i = OR; return _LOP; }
 "pass"      { return _PASS; }
 "return"    { return _RETURN;}
-"True"      { return _BOOL; }
+"True"      { yylval.s = strdup(yytext); return _NUM_BOOL; }
 "try"       { return _TRY; }
 "while"   	{ return _WHILE; }
 	
@@ -98,9 +98,9 @@
 "!="    { yylval.i = NEQ;  return _RELOP; }
 
 [a-zA-Z_][a-zA-Z0-9_]* 			{ yylval.s = strdup(yytext); return _ID; }
-[+]?[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _INT; }
-[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _FLOAT; }
-[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _FLOAT; }
+[+]?[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _NUM_BOOL; }
+[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
+[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
 \".*\"     						{ yylval.s = strdup(yytext); return _STRING; }
 \'.*\'     						{ yylval.s = strdup(yytext); return _STRING; }
 

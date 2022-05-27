@@ -1,7 +1,6 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define bool int
 #define TRUE  1
 #define FALSE 0
 
@@ -15,7 +14,7 @@ extern char char_buffer[CHAR_BUFFER_LENGTH];
 
 //pomocni makroi za ispis
 extern void warning(char *s);
-extern int yyerror(char *s);
+extern int yyerror(const char *s);
 #define err(args...)  sprintf(char_buffer, args), \
                       yyerror(char_buffer)
 #define warn(args...) sprintf(char_buffer, args), \
@@ -23,11 +22,10 @@ extern int yyerror(char *s);
 
 
 //tipovi podataka
-enum types { NONE, INT, FLOAT, STRING };
+enum types { UNKNOWN, NONE, NUM_BOOL, STRING };
 
 //vrste simbola (moze ih biti maksimalno 32)
-enum kinds { NO_KIND = 0x1, REG = 0x2, LIT = 0x4, 
-             FUN = 0x8, VAR = 0x10, PAR = 0x20 };
+enum kinds { NO_KIND = 0x1, REG = 0x2, LIT = 0x4, FUN = 0x8, VAR = 0x10, PAR = 0x20 };
 
 //konstante arithmetickih operatora
 enum arops { ADD, SUB, MUL, DIV};

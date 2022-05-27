@@ -1,20 +1,27 @@
 %{
   #include <stdio.h>
-  #include <err.h>
   #include <stdbool.h>
-  
+  #include "defs.h"
+  #include "symtab.h"
+ 
   int yylex(void);
   int yyparse(void);
   int yyerror(const char *);
   void throwErr(const char *);
   extern int yylineno;
-  char startErrMess[] = "Error on line: " ;
   
+  char char_buffer[CHAR_BUFFER_LENGTH];
+
   // Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
   int loopCounter = 0;
   
   // Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
   bool valuedParamDef = false;
+  
+  int funcInds[32];
+  int funcCounter = -1;
+  
+  
 %}
 
 %union {
@@ -30,8 +37,8 @@
 %token _DEF
 %token _ELIF _ELSE _EXCEPT
 %token _FINALLY _FOR
-%token _IF _IN _IS
-%token _NONE _NOT
+%token _IF _IN
+%token _NOT
 %token _OR
 %token _PASS
 %token _RETURN
@@ -43,10 +50,14 @@
 %token _LPAREN _RPAREN
 %token _ASSIGN
 
-%token _AROP _LOP _RELOP
+%token <i> _AROP _LOP _RELOP
 
-%token _ID
-%token _INT _FLOAT _STRING _BOOL
+%token <s> _ID
+%token <s> _NUM_BOOL _STRING _NONE
+
+
+%type <i> num_exp num_exp_start exp function_call literal
+
 
 %define parse.error verbose
 
@@ -97,6 +108,10 @@ compound_statement
 	
 assign_statement
 	: _ID _ASSIGN num_exp
+      {
+        if(lookup_symbol($1, VAR|PAR) == NO_INDEX)
+           insert_symbol($1, VAR, $3, NO_ATR, NO_ATR);
+      }
 	; 
 
 return_statement
@@ -105,7 +120,13 @@ return_statement
 	;
 
 function_call
-	: _ID _LPAREN arguments _RPAREN 
+	: _ID _LPAREN arguments _RPAREN
+      {
+        int funcInd = lookup_symbol($1, FUN);
+        if(funcInd == NO_INDEX)
+           err("There is no defined function of name %s", $1);
+      	$$ = get_type(funcInd);
+      }
 	;
 	
 arguments
@@ -200,14 +221,40 @@ body
 		
 
 num_exp
-	: num_exp_start
+	: num_exp_start { $$ = $1; }
 	| num_exp _AROP num_exp_start
+		{
+			int lt = get_type($1);
+			int rt = get_type($3);
+
+			if (lt != UNKNOWN && rt != UNKNOWN) {
+				if (lt == NONE || rt == NONE)
+					err("Cannot operate with values of type 'None'!");
+				else if (lt == STRING && rt == STRING) {
+					if ($2 != ADD)
+						err("Cannot apply '-', '/' or '*' on strings, only '+'!");
+					$$ = STRING;
+				}
+				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL)) {
+					if ($2 != MUL)
+						err("Cannot apply '-', '/' or '+' on strings, only '*'!");
+					$$ = STRING;
+				}
+				else
+					$$ = NUM_BOOL;
+			}
+			else 
+				$$ = UNKNOWN;
+		}
 	| num_exp _LOP num_exp_start
+		{
+		
+		}
 	| num_exp _RELOP num_exp_start
 	;
 
 num_exp_start
-	: negation exp  
+	: negation exp  { $$ = $2; }
 	;
 
 negation
@@ -216,18 +263,22 @@ negation
 	;
 	
 exp
-	: literal
+	: literal	 { $$ = $1; }
 	| _ID %prec VAR_ID
-	| function_call  
-	| _LPAREN num_exp _RPAREN
+		{
+			int idInd = lookup_symbol($1, VAR|PAR);
+			if (idInd == NO_INDEX)
+				err("Variable %s does not exist!", $1);
+			$$ = get_type(idInd); 
+		}
+	| function_call		{ $$ = $1; }
+	| _LPAREN num_exp _RPAREN	{ $$ = $2; }
 	;
 	
 literal
-	: _INT 
-	| _FLOAT
-	| _STRING
-	| _BOOL
-	| _NONE
+	: _NUM_BOOL	{ $$ = insert_literal($1, NUM_BOOL); }
+	| _STRING	{ $$ = insert_literal($1, STRING); }
+	| _NONE		{ $$ = insert_literal($1, NONE); }
 	;
 
 	
@@ -242,5 +293,5 @@ int yyerror(const char *s) {
 } 
 
 void throwErr(const char* mess) {
-	err(500, "%s%d >> %s", startErrMess, yylineno, mess);
+	err("Error on line: %d >> %s", yylineno, mess);
 }
