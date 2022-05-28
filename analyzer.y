@@ -17,9 +17,8 @@
   
   // Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
   bool valuedParamDef = false;
-  
-  int funcInds[32];
-  int funcCounter = -1;
+
+
   
   
 %}
@@ -50,19 +49,26 @@
 %token _LPAREN _RPAREN
 %token _ASSIGN
 
-%token <i> _AROP _LOP _RELOP
+%token <i> _ADD_SUB_OP _MUL_DIV_OP _LOP _RELOP
 
 %token <s> _ID
-%token <s> _NUM_BOOL _STRING _NONE
+%token <i> _NUM_BOOL _STRING _NONE
 
 
-%type <i> num_exp num_exp_start exp function_call literal
+%type <i> num_exp exp function_call literal
 
 
 %define parse.error verbose
 
+
 %nonassoc VAR_ID 
 %nonassoc _LPAREN
+
+%left _LOP
+%right _NOT
+%left _RELOP
+%left _ADD_SUB_OP
+%left _MUL_DIV_OP 
 
 %%
 
@@ -140,7 +146,17 @@ args
 	;
 
 function_def
-	: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE body
+	: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE 
+		{
+			if(lookup_symbol($2, FUN) == NO_INDEX)
+			   insert_symbol($2, FUN, UNKNOWN, NO_ATR, NO_ATR);
+			else
+				err("asfas");
+		}	
+	  body 
+	  	{
+	  	        clear_symbols(1);
+	  	}
 	;
 
 parameters 
@@ -221,23 +237,42 @@ body
 		
 
 num_exp
-	: num_exp_start { $$ = $1; }
-	| num_exp _AROP num_exp_start
+	: exp       	{ $$ = $1; }
+	| _NOT num_exp  { $$ = NUM_BOOL; }
+	| num_exp _ADD_SUB_OP num_exp
 		{
-			int lt = get_type($1);
-			int rt = get_type($3);
+			int lt = $1;
+			int rt = $3;
 
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
-					err("Cannot operate with values of type 'None'!");
+					err("Invalid operator for operands of type 'None'!");
 				else if (lt == STRING && rt == STRING) {
-					if ($2 != ADD)
-						err("Cannot apply '-', '/' or '*' on strings, only '+'!");
+					if ($2 == SUB)
+						err("Invalid operator '-' for operands of type 'string' and 'string'!");
 					$$ = STRING;
 				}
+				else if (lt == NUM_BOOL && rt == NUM_BOOL)
+					$$ = NUM_BOOL;
+				else
+					err("Invalid operator '+'/'-' for operands of type 'number'/'boolean' and 'string'!");
+			}
+			else 
+				$$ = UNKNOWN;
+		}
+	| num_exp _MUL_DIV_OP num_exp
+		{
+			int lt = $1;
+			int rt = $3;
+
+			if (lt != UNKNOWN && rt != UNKNOWN) {
+				if (lt == NONE || rt == NONE)
+					err("Invalid operator for operands of type 'None'!");
+				else if (lt == STRING && rt == STRING)
+					err("Invalid operator for operands of type 'string' and 'string'!");
 				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL)) {
-					if ($2 != MUL)
-						err("Cannot apply '-', '/' or '+' on strings, only '*'!");
+					if ($2 == DIV)
+						err("Invalid operator for operands of type 'string' and 'number'/'boolean'!");
 					$$ = STRING;
 				}
 				else
@@ -245,21 +280,33 @@ num_exp
 			}
 			else 
 				$$ = UNKNOWN;
-		}
-	| num_exp _LOP num_exp_start
+		}	
+	| num_exp _LOP num_exp
 		{
-		
+			int lt = $1;
+			int rt = $3;
+
+			if ($2 == AND)
+				return rt;
+			else 
+				return lt;			
 		}
-	| num_exp _RELOP num_exp_start
-	;
+	| num_exp _RELOP num_exp
+		{
+			int lt = $1;
+			int rt = $3;
 
-num_exp_start
-	: negation exp  { $$ = $2; }
-	;
-
-negation
-	: /* no negation */
-	| negation _NOT
+			if (lt != UNKNOWN && rt != UNKNOWN) {
+				if (lt == NONE || rt == NONE)
+					err("Invalid operator for operands of type 'None'!");
+				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL))
+					err("Invalid operator for operands of type 'number'/'boolean' and 'string'!");
+				else
+					$$ = NUM_BOOL;
+			}
+			else 
+				$$ = UNKNOWN;
+		}
 	;
 	
 exp
@@ -276,9 +323,9 @@ exp
 	;
 	
 literal
-	: _NUM_BOOL	{ $$ = insert_literal($1, NUM_BOOL); }
-	| _STRING	{ $$ = insert_literal($1, STRING); }
-	| _NONE		{ $$ = insert_literal($1, NONE); }
+	: _NUM_BOOL	{ $$ = $1; }
+	| _STRING	{ $$ = $1; }
+	| _NONE		{ $$ = $1; }
 	;
 
 	

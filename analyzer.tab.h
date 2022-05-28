@@ -79,14 +79,15 @@ extern int yydebug;
     _LPAREN = 280,                 /* _LPAREN  */
     _RPAREN = 281,                 /* _RPAREN  */
     _ASSIGN = 282,                 /* _ASSIGN  */
-    _AROP = 283,                   /* _AROP  */
-    _LOP = 284,                    /* _LOP  */
-    _RELOP = 285,                  /* _RELOP  */
-    _ID = 286,                     /* _ID  */
-    _NUM_BOOL = 287,               /* _NUM_BOOL  */
-    _STRING = 288,                 /* _STRING  */
-    _NONE = 289,                   /* _NONE  */
-    VAR_ID = 290                   /* VAR_ID  */
+    _ADD_SUB_OP = 283,             /* _ADD_SUB_OP  */
+    _MUL_DIV_OP = 284,             /* _MUL_DIV_OP  */
+    _LOP = 285,                    /* _LOP  */
+    _RELOP = 286,                  /* _RELOP  */
+    _ID = 287,                     /* _ID  */
+    _NUM_BOOL = 288,               /* _NUM_BOOL  */
+    _STRING = 289,                 /* _STRING  */
+    _NONE = 290,                   /* _NONE  */
+    VAR_ID = 291                   /* VAR_ID  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -95,12 +96,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 27 "analyzer.y"
+#line 26 "analyzer.y"
 
   int i;
   char *s;
 
-#line 104 "analyzer.tab.h"
+#line 105 "analyzer.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

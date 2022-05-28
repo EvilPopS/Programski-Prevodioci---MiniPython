@@ -65,16 +65,16 @@
 "else"      { return _ELSE; }
 "except"    { return _EXCEPT; }
 "finally"   { return _FINALLY; }
-"False"     { yylval.s = strdup(yytext); return _NUM_BOOL; }
+"False"     { yylval.i = NUM_BOOL; return _NUM_BOOL; }
 "if"        { return _IF; }
 "in"        { return _IN; }
 "is"        { yylval.i = IS; return _RELOP; }
-"None"      { yylval.s = strdup(yytext); return _NONE; }
+"None"      { yylval.i = NONE; return _NONE; }
 "not"       { return _NOT; }
 "or"        { yylval.i = OR; return _LOP; }
 "pass"      { return _PASS; }
 "return"    { return _RETURN;}
-"True"      { yylval.s = strdup(yytext); return _NUM_BOOL; }
+"True"      { yylval.i = NUM_BOOL; return _NUM_BOOL; }
 "try"       { return _TRY; }
 "while"   	{ return _WHILE; }
 	
@@ -85,10 +85,10 @@
 ")"     { return _RPAREN; }
 "="		{ return _ASSIGN;}
 
-"+"     { yylval.i = ADD; return _AROP;}
-"-"     { yylval.i = SUB; return _AROP; }
-"*"		{ yylval.i = MUL; return _AROP; }
-"/"		{ yylval.i = DIV; return _AROP; }
+"+"     { yylval.i = ADD; return _ADD_SUB_OP;}
+"-"     { yylval.i = SUB; return _ADD_SUB_OP; }
+"*"		{ yylval.i = MUL; return _MUL_DIV_OP; }
+"/"		{ yylval.i = DIV; return _MUL_DIV_OP; }
 
 "<"     { yylval.i = LS;   return _RELOP; }
 ">"     { yylval.i = GR;   return _RELOP; }
@@ -98,11 +98,11 @@
 "!="    { yylval.i = NEQ;  return _RELOP; }
 
 [a-zA-Z_][a-zA-Z0-9_]* 			{ yylval.s = strdup(yytext); return _ID; }
-[+]?[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _NUM_BOOL; }
-[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
-[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
-\".*\"     						{ yylval.s = strdup(yytext); return _STRING; }
-\'.*\'     						{ yylval.s = strdup(yytext); return _STRING; }
+[+]?[0-9]{1,10}     			{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.i = NUM_BOOL; return _NUM_BOOL; }
+[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.i = NUM_BOOL; return _NUM_BOOL; }
+\"[^"\n]*\"     				{ yylval.i = STRING; return _STRING; }
+\'[^'\n]*\'     				{ yylval.i = STRING; return _STRING; }
 
 .			{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
 
