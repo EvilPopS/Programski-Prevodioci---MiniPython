@@ -1,24 +1,29 @@
 %{
-  #include <stdio.h>
-  #include <stdbool.h>
-  #include "defs.h"
-  #include "symtab.h"
- 
-  int yylex(void);
-  int yyparse(void);
-  int yyerror(const char *);
-  void throwErr(const char *);
-  extern int yylineno;
-  
-  char char_buffer[CHAR_BUFFER_LENGTH];
+	#include <stdio.h>
+	#include <stdbool.h>
+	#include "defs.h"
+	#include "symtab.h"
 
-  // Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
-  int loopCounter = 0;
-  
-  // Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
-  bool valuedParamDef = false;
+	int yylex(void);
+	int yyparse(void);
+	int yyerror(const char *);
+	void throwErr(const char *);
+	extern int yylineno;
+	int error_count = 0;
+	unsigned scope = 0;
 
+	char char_buffer[CHAR_BUFFER_LENGTH];
 
+	// Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
+	int loopCounter = 0;
+
+	// Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
+	bool valuedParamDef = false;
+
+	int funcInds[32]; 
+	int currFuncInd = -1; 
+	int paramNum = 0;
+	
   
   
 %}
@@ -91,16 +96,20 @@ statement
 simple_statement
 	: assign_statement
 	| return_statement
+		{
+			if (currFuncInd < 0)
+				err("'return' must be inside a function definition!");
+		}
 	| function_call
 	| _BREAK
 		{
 			if (loopCounter == 0)
-				throwErr("'break' must be inside while statement!");
+				err("'break' must be inside while statement!");
 		}
 	| _CONTINUE
 		{
 			if (loopCounter == 0)
-				throwErr("'continue' must be inside while statement!");
+				err("'continue' must be inside while statement!");
 		}
 	| _PASS
 	;
@@ -115,8 +124,12 @@ compound_statement
 assign_statement
 	: _ID _ASSIGN num_exp
       {
-        if(lookup_symbol($1, VAR|PAR) == NO_INDEX)
-           insert_symbol($1, VAR, $3, NO_ATR, NO_ATR);
+      	int index = lookup_symbol_all_kinds($1);
+        if(index == NO_INDEX)
+           insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
+        else 
+        	if (get_kind(index) == FUN || get_scope(index) != scope)
+        		insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
       }
 	; 
 
@@ -128,8 +141,8 @@ return_statement
 function_call
 	: _ID _LPAREN arguments _RPAREN
       {
-        int funcInd = lookup_symbol($1, FUN);
-        if(funcInd == NO_INDEX)
+        int funcInd = lookup_symbol($1, VAR|PAR);
+        if(funcInd == NO_INDEX && get_kind(funcInd))
            err("There is no defined function of name %s", $1);
       	$$ = get_type(funcInd);
       }
@@ -146,34 +159,49 @@ args
 	;
 
 function_def
-	: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE 
+	: _DEF _ID 
 		{
-			if(lookup_symbol($2, FUN) == NO_INDEX)
-			   insert_symbol($2, FUN, UNKNOWN, NO_ATR, NO_ATR);
-			else
-				err("asfas");
+		    currFuncInd++;
+			funcInds[currFuncInd] = insert_symbol($2, FUN, UNKNOWN, NO_ATR, NO_ATR, scope);
+		}
+	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
+		{
+			set_atr1(funcInds[currFuncInd], paramNum);
+	    	paramNum = 0;
+	  		scope++;
 		}	
 	  body 
 	  	{
-	  	        clear_symbols(1);
+				print_symtab();
+	  	        clear_symbols(funcInds[currFuncInd] + 1);
+	  	        currFuncInd--;
+	  	        scope--;
 	  	}
 	;
 
 parameters 
 	: /* no params */
-	| _ID 
-	| param_with_default_val
-	| parameters _COMMA _ID
+	| _ID  						
+		{ 
+			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
+			paramNum++; 
+		}
+	| param_with_default_val	{ paramNum++; }
+	| parameters _COMMA _ID		
 		{
 			if (valuedParamDef)
 				throwErr("Parameters without default values cannot be defined after parameter with set default value.");
+
+			insert_symbol($3, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
+			paramNum++; 
 		}
-	| parameters _COMMA param_with_default_val
+	| parameters _COMMA param_with_default_val 	{ paramNum++; }
 	;
 	
 param_with_default_val
 	: _ID _ASSIGN num_exp
 		{
+			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
 			valuedParamDef = true;
 		}
 	;
@@ -332,13 +360,20 @@ literal
 %%
 
 int main() {
-  yyparse();
-}
+	int synerr;
+	init_symtab();
 
+	synerr = yyparse();
+
+	clear_symtab();
+
+	if(synerr)
+		return -1; 
+	else
+		return error_count; 
+}
 int yyerror(const char *s) {
   fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);
-} 
-
-void throwErr(const char* mess) {
-	err("Error on line: %d >> %s", yylineno, mess);
+  error_count++;
+  return 0;
 }

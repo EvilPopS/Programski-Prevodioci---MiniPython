@@ -9,6 +9,7 @@ typedef struct sym_entry {
    unsigned type;          // tip vrednosti simbola
    unsigned atr1;          // dodatni attribut simbola
    unsigned atr2;          // dodatni attribut simbola
+   unsigned scope;		   // scope u kom se nalazi simbol, dodato jer python ima mogucnost redefinisanja tj. override-ovanja funkcija/varijabli
 } SYMBOL_ENTRY;
 
 // Vraca indeks prvog sledeceg praznog elementa.
@@ -21,13 +22,14 @@ int get_last_element(void);
 // i vraca indeks ubacenog elementa u tabeli simbola 
 // ili -1 u slucaju da nema slobodnog elementa u tabeli.
 int insert_symbol(char *name, unsigned kind, unsigned type, 
-                  unsigned atr1, unsigned atr2);
+                  unsigned atr1, unsigned atr2, unsigned scope);
 
 // Ubacuje konstantu u tabelu simbola (ako vec ne postoji).
-int insert_literal(char *str, unsigned type);
+int insert_literal(char *str, unsigned type, unsigned scope);
 
 // Vraca indeks pronadjenog simbola ili vraca -1.
 int lookup_symbol(char *name, unsigned kind);
+int lookup_symbol_all_kinds(char *name);
 
 // set i get metode za polja tabele simbola
 void     set_name(int index, char *name);
@@ -40,6 +42,7 @@ void     set_atr1(int index, unsigned atr1);
 unsigned get_atr1(int index);
 void     set_atr2(int index, unsigned atr2);
 unsigned get_atr2(int index);
+unsigned get_scope(int index);
 
 // Brise elemente tabele od zadatog indeksa
 void clear_symbols(unsigned begin_index);

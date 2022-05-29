@@ -1,2 +1,13 @@
-a = not "123" < 12 
+a = 2
+def a():
+	f =2
+	g = 3
+	def afs():
+		asf= 2
+	a = 2
+b = 2
+	
+def absf(a, c=2, b=3):
+	a = 1
+	b = 3
 

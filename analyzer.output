@@ -47,100 +47,102 @@ Grammar
 
    26 $@1: ε
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE $@1 body
+   27 $@2: ε
 
-   28 parameters: ε
-   29           | _ID
-   30           | param_with_default_val
-   31           | parameters _COMMA _ID
-   32           | parameters _COMMA param_with_default_val
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body
 
-   33 param_with_default_val: _ID _ASSIGN num_exp
+   29 parameters: ε
+   30           | _ID
+   31           | param_with_default_val
+   32           | parameters _COMMA _ID
+   33           | parameters _COMMA param_with_default_val
 
-   34 if_statement: if_part elif_part else_part
+   34 param_with_default_val: _ID _ASSIGN num_exp
 
-   35 if_part: _IF num_exp _COLON _NEW_LINE body
+   35 if_statement: if_part elif_part else_part
 
-   36 elif_part: ε
-   37          | elif_part _ELIF num_exp _COLON _NEW_LINE body
+   36 if_part: _IF num_exp _COLON _NEW_LINE body
 
-   38 while_statement: while_part else_part
+   37 elif_part: ε
+   38          | elif_part _ELIF num_exp _COLON _NEW_LINE body
 
-   39 $@2: ε
+   39 while_statement: while_part else_part
 
-   40 while_part: _WHILE num_exp _COLON _NEW_LINE $@2 body
+   40 $@3: ε
 
-   41 try_except_statement: try_part except_part finally_or_else_part
+   41 while_part: _WHILE num_exp _COLON _NEW_LINE $@3 body
 
-   42 try_part: _TRY _COLON _NEW_LINE body
+   42 try_except_statement: try_part except_part finally_or_else_part
 
-   43 except_part: ε
-   44            | except_part _EXCEPT _ID _COLON _NEW_LINE body
-   45            | except_part _EXCEPT _COLON _NEW_LINE body
+   43 try_part: _TRY _COLON _NEW_LINE body
 
-   46 finally_or_else_part: ε
-   47                     | _FINALLY _COLON _NEW_LINE body
-   48                     | _ELSE _COLON _NEW_LINE body
+   44 except_part: ε
+   45            | except_part _EXCEPT _ID _COLON _NEW_LINE body
+   46            | except_part _EXCEPT _COLON _NEW_LINE body
 
-   49 else_part: ε
-   50          | _ELSE _COLON _NEW_LINE body
+   47 finally_or_else_part: ε
+   48                     | _FINALLY _COLON _NEW_LINE body
+   49                     | _ELSE _COLON _NEW_LINE body
 
-   51 body: _INDENT statement_list _DEDENT
+   50 else_part: ε
+   51          | _ELSE _COLON _NEW_LINE body
 
-   52 num_exp: exp
-   53        | _NOT num_exp
-   54        | num_exp _ADD_SUB_OP num_exp
-   55        | num_exp _MUL_DIV_OP num_exp
-   56        | num_exp _LOP num_exp
-   57        | num_exp _RELOP num_exp
+   52 body: _INDENT statement_list _DEDENT
 
-   58 exp: literal
-   59    | _ID
-   60    | function_call
-   61    | _LPAREN num_exp _RPAREN
+   53 num_exp: exp
+   54        | _NOT num_exp
+   55        | num_exp _ADD_SUB_OP num_exp
+   56        | num_exp _MUL_DIV_OP num_exp
+   57        | num_exp _LOP num_exp
+   58        | num_exp _RELOP num_exp
 
-   62 literal: _NUM_BOOL
-   63        | _STRING
-   64        | _NONE
+   59 exp: literal
+   60    | _ID
+   61    | function_call
+   62    | _LPAREN num_exp _RPAREN
+
+   63 literal: _NUM_BOOL
+   64        | _STRING
+   65        | _NONE
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    _NEW_LINE (258) 3 6 27 35 37 40 42 44 45 47 48 50
-    _INDENT (259) 51
-    _DEDENT (260) 51
+    _NEW_LINE (258) 3 6 28 36 38 41 43 45 46 48 49 51
+    _INDENT (259) 52
+    _DEDENT (260) 52
     _AND (261)
     _BREAK (262) 11
     _CONTINUE (263) 12
-    _DEF (264) 27
-    _ELIF (265) 37
-    _ELSE (266) 48 50
-    _EXCEPT (267) 44 45
-    _FINALLY (268) 47
+    _DEF (264) 28
+    _ELIF (265) 38
+    _ELSE (266) 49 51
+    _EXCEPT (267) 45 46
+    _FINALLY (268) 48
     _FOR (269)
-    _IF (270) 35
+    _IF (270) 36
     _IN (271)
-    _NOT (272) 53
+    _NOT (272) 54
     _OR (273)
     _PASS (274) 13
     _RETURN (275) 19 20
-    _TRY (276) 42
-    _WHILE (277) 40
-    _COMMA (278) 25 31 32
-    _COLON (279) 27 35 37 40 42 44 45 47 48 50
-    _LPAREN (280) 21 27 61
-    _RPAREN (281) 21 27 61
-    _ASSIGN (282) 18 33
-    _ADD_SUB_OP <i> (283) 54
-    _MUL_DIV_OP <i> (284) 55
-    _LOP <i> (285) 56
-    _RELOP <i> (286) 57
-    _ID <s> (287) 18 21 27 29 31 33 44 59
-    _NUM_BOOL <i> (288) 62
-    _STRING <i> (289) 63
-    _NONE <i> (290) 64
+    _TRY (276) 43
+    _WHILE (277) 41
+    _COMMA (278) 25 32 33
+    _COLON (279) 28 36 38 41 43 45 46 48 49 51
+    _LPAREN (280) 21 28 62
+    _RPAREN (281) 21 28 62
+    _ASSIGN (282) 18 34
+    _ADD_SUB_OP <i> (283) 55
+    _MUL_DIV_OP <i> (284) 56
+    _LOP <i> (285) 57
+    _RELOP <i> (286) 58
+    _ID <s> (287) 18 21 28 30 32 34 45 60
+    _NUM_BOOL <i> (288) 63
+    _STRING <i> (289) 64
+    _NONE <i> (290) 65
     VAR_ID (291)
 
 
@@ -153,7 +155,7 @@ Nonterminals, with rules where they appear
         on right: 0
     statement_list (39)
         on left: 4 5
-        on right: 2 3 5 51
+        on right: 2 3 5 52
     statement (40)
         on left: 6 7
         on right: 4 5
@@ -171,7 +173,7 @@ Nonterminals, with rules where they appear
         on right: 9
     function_call <i> (45)
         on left: 21
-        on right: 10 60
+        on right: 10 61
     arguments (46)
         on left: 22 23
         on right: 21 23
@@ -179,62 +181,65 @@ Nonterminals, with rules where they appear
         on left: 24 25
         on right: 23 25
     function_def (48)
-        on left: 27
+        on left: 28
         on right: 14
     $@1 (49)
         on left: 26
-        on right: 27
-    parameters (50)
-        on left: 28 29 30 31 32
-        on right: 27 31 32
-    param_with_default_val (51)
-        on left: 33
-        on right: 30 32
-    if_statement (52)
+        on right: 28
+    $@2 (50)
+        on left: 27
+        on right: 28
+    parameters (51)
+        on left: 29 30 31 32 33
+        on right: 28 32 33
+    param_with_default_val (52)
         on left: 34
-        on right: 15
-    if_part (53)
+        on right: 31 33
+    if_statement (53)
         on left: 35
-        on right: 34
-    elif_part (54)
-        on left: 36 37
-        on right: 34 37
-    while_statement (55)
-        on left: 38
-        on right: 16
-    while_part (56)
-        on left: 40
-        on right: 38
-    $@2 (57)
+        on right: 15
+    if_part (54)
+        on left: 36
+        on right: 35
+    elif_part (55)
+        on left: 37 38
+        on right: 35 38
+    while_statement (56)
         on left: 39
-        on right: 40
-    try_except_statement (58)
+        on right: 16
+    while_part (57)
         on left: 41
-        on right: 17
-    try_part (59)
+        on right: 39
+    $@3 (58)
+        on left: 40
+        on right: 41
+    try_except_statement (59)
         on left: 42
-        on right: 41
-    except_part (60)
-        on left: 43 44 45
-        on right: 41 44 45
-    finally_or_else_part (61)
-        on left: 46 47 48
-        on right: 41
-    else_part (62)
-        on left: 49 50
-        on right: 34 38
-    body (63)
-        on left: 51
-        on right: 27 35 37 40 42 44 45 47 48 50
-    num_exp <i> (64)
-        on left: 52 53 54 55 56 57
-        on right: 18 20 24 25 33 35 37 40 53 54 55 56 57 61
-    exp <i> (65)
-        on left: 58 59 60 61
-        on right: 52
-    literal <i> (66)
-        on left: 62 63 64
-        on right: 58
+        on right: 17
+    try_part (60)
+        on left: 43
+        on right: 42
+    except_part (61)
+        on left: 44 45 46
+        on right: 42 45 46
+    finally_or_else_part (62)
+        on left: 47 48 49
+        on right: 42
+    else_part (63)
+        on left: 50 51
+        on right: 35 39
+    body (64)
+        on left: 52
+        on right: 28 36 38 41 43 45 46 48 49 51
+    num_exp <i> (65)
+        on left: 53 54 55 56 57 58
+        on right: 18 20 24 25 34 36 38 41 54 55 56 57 58 62
+    exp <i> (66)
+        on left: 59 60 61 62
+        on right: 53
+    literal <i> (67)
+        on left: 63 64 65
+        on right: 59
 
 
 State 0
@@ -317,14 +322,14 @@ State 3
 
 State 4
 
-   27 function_def: _DEF • _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE $@1 body
+   28 function_def: _DEF • _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body
 
     _ID  shift, and go to state 27
 
 
 State 5
 
-   35 if_part: _IF • num_exp _COLON _NEW_LINE body
+   36 if_part: _IF • num_exp _COLON _NEW_LINE body
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -368,14 +373,14 @@ State 7
 
 State 8
 
-   42 try_part: _TRY • _COLON _NEW_LINE body
+   43 try_part: _TRY • _COLON _NEW_LINE body
 
     _COLON  shift, and go to state 39
 
 
 State 9
 
-   40 while_part: _WHILE • num_exp _COLON _NEW_LINE $@2 body
+   41 while_part: _WHILE • num_exp _COLON _NEW_LINE $@3 body
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -496,9 +501,9 @@ State 20
 
 State 21
 
-   34 if_statement: if_part • elif_part else_part
+   35 if_statement: if_part • elif_part else_part
 
-    $default  reduce using rule 36 (elif_part)
+    $default  reduce using rule 37 (elif_part)
 
     elif_part  go to state 46
 
@@ -512,11 +517,11 @@ State 22
 
 State 23
 
-   38 while_statement: while_part • else_part
+   39 while_statement: while_part • else_part
 
     _ELSE  shift, and go to state 47
 
-    $default  reduce using rule 49 (else_part)
+    $default  reduce using rule 50 (else_part)
 
     else_part  go to state 48
 
@@ -530,9 +535,9 @@ State 24
 
 State 25
 
-   41 try_except_statement: try_part • except_part finally_or_else_part
+   42 try_except_statement: try_part • except_part finally_or_else_part
 
-    $default  reduce using rule 43 (except_part)
+    $default  reduce using rule 44 (except_part)
 
     except_part  go to state 49
 
@@ -571,14 +576,16 @@ State 26
 
 State 27
 
-   27 function_def: _DEF _ID • _LPAREN parameters _RPAREN _COLON _NEW_LINE $@1 body
+   28 function_def: _DEF _ID • $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body
 
-    _LPAREN  shift, and go to state 50
+    $default  reduce using rule 26 ($@1)
+
+    $@1  go to state 50
 
 
 State 28
 
-   53 num_exp: _NOT • num_exp
+   54 num_exp: _NOT • num_exp
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -595,7 +602,7 @@ State 28
 
 State 29
 
-   61 exp: _LPAREN • num_exp _RPAREN
+   62 exp: _LPAREN • num_exp _RPAREN
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -613,48 +620,48 @@ State 29
 State 30
 
    21 function_call: _ID • _LPAREN arguments _RPAREN
-   59 exp: _ID •
+   60 exp: _ID •
 
     _LPAREN  shift, and go to state 41
-
-    $default  reduce using rule 59 (exp)
-
-
-State 31
-
-   62 literal: _NUM_BOOL •
-
-    $default  reduce using rule 62 (literal)
-
-
-State 32
-
-   63 literal: _STRING •
-
-    $default  reduce using rule 63 (literal)
-
-
-State 33
-
-   64 literal: _NONE •
-
-    $default  reduce using rule 64 (literal)
-
-
-State 34
-
-   60 exp: function_call •
 
     $default  reduce using rule 60 (exp)
 
 
+State 31
+
+   63 literal: _NUM_BOOL •
+
+    $default  reduce using rule 63 (literal)
+
+
+State 32
+
+   64 literal: _STRING •
+
+    $default  reduce using rule 64 (literal)
+
+
+State 33
+
+   65 literal: _NONE •
+
+    $default  reduce using rule 65 (literal)
+
+
+State 34
+
+   61 exp: function_call •
+
+    $default  reduce using rule 61 (exp)
+
+
 State 35
 
-   35 if_part: _IF num_exp • _COLON _NEW_LINE body
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   36 if_part: _IF num_exp • _COLON _NEW_LINE body
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _COLON       shift, and go to state 53
     _ADD_SUB_OP  shift, and go to state 54
@@ -665,25 +672,25 @@ State 35
 
 State 36
 
-   52 num_exp: exp •
+   53 num_exp: exp •
 
-    $default  reduce using rule 52 (num_exp)
+    $default  reduce using rule 53 (num_exp)
 
 
 State 37
 
-   58 exp: literal •
+   59 exp: literal •
 
-    $default  reduce using rule 58 (exp)
+    $default  reduce using rule 59 (exp)
 
 
 State 38
 
    20 return_statement: _RETURN num_exp •
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
@@ -695,18 +702,18 @@ State 38
 
 State 39
 
-   42 try_part: _TRY _COLON • _NEW_LINE body
+   43 try_part: _TRY _COLON • _NEW_LINE body
 
     _NEW_LINE  shift, and go to state 58
 
 
 State 40
 
-   40 while_part: _WHILE num_exp • _COLON _NEW_LINE $@2 body
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   41 while_part: _WHILE num_exp • _COLON _NEW_LINE $@3 body
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _COLON       shift, and go to state 59
     _ADD_SUB_OP  shift, and go to state 54
@@ -764,82 +771,77 @@ State 45
 
 State 46
 
-   34 if_statement: if_part elif_part • else_part
-   37 elif_part: elif_part • _ELIF num_exp _COLON _NEW_LINE body
+   35 if_statement: if_part elif_part • else_part
+   38 elif_part: elif_part • _ELIF num_exp _COLON _NEW_LINE body
 
     _ELIF  shift, and go to state 62
     _ELSE  shift, and go to state 47
 
-    $default  reduce using rule 49 (else_part)
+    $default  reduce using rule 50 (else_part)
 
     else_part  go to state 63
 
 
 State 47
 
-   50 else_part: _ELSE • _COLON _NEW_LINE body
+   51 else_part: _ELSE • _COLON _NEW_LINE body
 
     _COLON  shift, and go to state 64
 
 
 State 48
 
-   38 while_statement: while_part else_part •
+   39 while_statement: while_part else_part •
 
-    $default  reduce using rule 38 (while_statement)
+    $default  reduce using rule 39 (while_statement)
 
 
 State 49
 
-   41 try_except_statement: try_part except_part • finally_or_else_part
-   44 except_part: except_part • _EXCEPT _ID _COLON _NEW_LINE body
-   45            | except_part • _EXCEPT _COLON _NEW_LINE body
+   42 try_except_statement: try_part except_part • finally_or_else_part
+   45 except_part: except_part • _EXCEPT _ID _COLON _NEW_LINE body
+   46            | except_part • _EXCEPT _COLON _NEW_LINE body
 
     _ELSE     shift, and go to state 65
     _EXCEPT   shift, and go to state 66
     _FINALLY  shift, and go to state 67
 
-    $default  reduce using rule 46 (finally_or_else_part)
+    $default  reduce using rule 47 (finally_or_else_part)
 
     finally_or_else_part  go to state 68
 
 
 State 50
 
-   27 function_def: _DEF _ID _LPAREN • parameters _RPAREN _COLON _NEW_LINE $@1 body
+   28 function_def: _DEF _ID $@1 • _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body
 
-    _ID  shift, and go to state 69
-
-    $default  reduce using rule 28 (parameters)
-
-    parameters              go to state 70
-    param_with_default_val  go to state 71
+    _LPAREN  shift, and go to state 69
 
 
 State 51
 
-   53 num_exp: _NOT num_exp •
-   54        | num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   54 num_exp: _NOT num_exp •
+   55        | num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
     _RELOP       shift, and go to state 57
 
-    $default  reduce using rule 53 (num_exp)
+    $default  reduce using rule 54 (num_exp)
 
 
 State 52
 
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
-   61 exp: _LPAREN num_exp • _RPAREN
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
+   62 exp: _LPAREN num_exp • _RPAREN
 
-    _RPAREN      shift, and go to state 72
+    _RPAREN      shift, and go to state 70
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
     _LOP         shift, and go to state 56
@@ -848,14 +850,48 @@ State 52
 
 State 53
 
-   35 if_part: _IF num_exp _COLON • _NEW_LINE body
+   36 if_part: _IF num_exp _COLON • _NEW_LINE body
 
-    _NEW_LINE  shift, and go to state 73
+    _NEW_LINE  shift, and go to state 71
 
 
 State 54
 
-   54 num_exp: num_exp _ADD_SUB_OP • num_exp
+   55 num_exp: num_exp _ADD_SUB_OP • num_exp
+
+    _NOT       shift, and go to state 28
+    _LPAREN    shift, and go to state 29
+    _ID        shift, and go to state 30
+    _NUM_BOOL  shift, and go to state 31
+    _STRING    shift, and go to state 32
+    _NONE      shift, and go to state 33
+
+    function_call  go to state 34
+    num_exp        go to state 72
+    exp            go to state 36
+    literal        go to state 37
+
+
+State 55
+
+   56 num_exp: num_exp _MUL_DIV_OP • num_exp
+
+    _NOT       shift, and go to state 28
+    _LPAREN    shift, and go to state 29
+    _ID        shift, and go to state 30
+    _NUM_BOOL  shift, and go to state 31
+    _STRING    shift, and go to state 32
+    _NONE      shift, and go to state 33
+
+    function_call  go to state 34
+    num_exp        go to state 73
+    exp            go to state 36
+    literal        go to state 37
+
+
+State 56
+
+   57 num_exp: num_exp _LOP • num_exp
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -870,9 +906,9 @@ State 54
     literal        go to state 37
 
 
-State 55
+State 57
 
-   55 num_exp: num_exp _MUL_DIV_OP • num_exp
+   58 num_exp: num_exp _RELOP • num_exp
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -887,54 +923,20 @@ State 55
     literal        go to state 37
 
 
-State 56
-
-   56 num_exp: num_exp _LOP • num_exp
-
-    _NOT       shift, and go to state 28
-    _LPAREN    shift, and go to state 29
-    _ID        shift, and go to state 30
-    _NUM_BOOL  shift, and go to state 31
-    _STRING    shift, and go to state 32
-    _NONE      shift, and go to state 33
-
-    function_call  go to state 34
-    num_exp        go to state 76
-    exp            go to state 36
-    literal        go to state 37
-
-
-State 57
-
-   57 num_exp: num_exp _RELOP • num_exp
-
-    _NOT       shift, and go to state 28
-    _LPAREN    shift, and go to state 29
-    _ID        shift, and go to state 30
-    _NUM_BOOL  shift, and go to state 31
-    _STRING    shift, and go to state 32
-    _NONE      shift, and go to state 33
-
-    function_call  go to state 34
-    num_exp        go to state 77
-    exp            go to state 36
-    literal        go to state 37
-
-
 State 58
 
-   42 try_part: _TRY _COLON _NEW_LINE • body
+   43 try_part: _TRY _COLON _NEW_LINE • body
 
-    _INDENT  shift, and go to state 78
+    _INDENT  shift, and go to state 76
 
-    body  go to state 79
+    body  go to state 77
 
 
 State 59
 
-   40 while_part: _WHILE num_exp _COLON • _NEW_LINE $@2 body
+   41 while_part: _WHILE num_exp _COLON • _NEW_LINE $@3 body
 
-    _NEW_LINE  shift, and go to state 80
+    _NEW_LINE  shift, and go to state 78
 
 
 State 60
@@ -944,15 +946,15 @@ State 60
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
-    _RPAREN    shift, and go to state 81
+    _RPAREN    shift, and go to state 79
     _ID        shift, and go to state 30
     _NUM_BOOL  shift, and go to state 31
     _STRING    shift, and go to state 32
     _NONE      shift, and go to state 33
 
     function_call  go to state 34
-    args           go to state 82
-    num_exp        go to state 83
+    args           go to state 80
+    num_exp        go to state 81
     exp            go to state 36
     literal        go to state 37
 
@@ -960,10 +962,10 @@ State 60
 State 61
 
    18 assign_statement: _ID _ASSIGN num_exp •
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
@@ -975,7 +977,7 @@ State 61
 
 State 62
 
-   37 elif_part: elif_part _ELIF • num_exp _COLON _NEW_LINE body
+   38 elif_part: elif_part _ELIF • num_exp _COLON _NEW_LINE body
 
     _NOT       shift, and go to state 28
     _LPAREN    shift, and go to state 29
@@ -985,154 +987,139 @@ State 62
     _NONE      shift, and go to state 33
 
     function_call  go to state 34
-    num_exp        go to state 84
+    num_exp        go to state 82
     exp            go to state 36
     literal        go to state 37
 
 
 State 63
 
-   34 if_statement: if_part elif_part else_part •
+   35 if_statement: if_part elif_part else_part •
 
-    $default  reduce using rule 34 (if_statement)
+    $default  reduce using rule 35 (if_statement)
 
 
 State 64
 
-   50 else_part: _ELSE _COLON • _NEW_LINE body
+   51 else_part: _ELSE _COLON • _NEW_LINE body
 
-    _NEW_LINE  shift, and go to state 85
+    _NEW_LINE  shift, and go to state 83
 
 
 State 65
 
-   48 finally_or_else_part: _ELSE • _COLON _NEW_LINE body
+   49 finally_or_else_part: _ELSE • _COLON _NEW_LINE body
 
-    _COLON  shift, and go to state 86
+    _COLON  shift, and go to state 84
 
 
 State 66
 
-   44 except_part: except_part _EXCEPT • _ID _COLON _NEW_LINE body
-   45            | except_part _EXCEPT • _COLON _NEW_LINE body
+   45 except_part: except_part _EXCEPT • _ID _COLON _NEW_LINE body
+   46            | except_part _EXCEPT • _COLON _NEW_LINE body
 
-    _COLON  shift, and go to state 87
-    _ID     shift, and go to state 88
+    _COLON  shift, and go to state 85
+    _ID     shift, and go to state 86
 
 
 State 67
 
-   47 finally_or_else_part: _FINALLY • _COLON _NEW_LINE body
+   48 finally_or_else_part: _FINALLY • _COLON _NEW_LINE body
 
-    _COLON  shift, and go to state 89
+    _COLON  shift, and go to state 87
 
 
 State 68
 
-   41 try_except_statement: try_part except_part finally_or_else_part •
+   42 try_except_statement: try_part except_part finally_or_else_part •
 
-    $default  reduce using rule 41 (try_except_statement)
+    $default  reduce using rule 42 (try_except_statement)
 
 
 State 69
 
-   29 parameters: _ID •
-   33 param_with_default_val: _ID • _ASSIGN num_exp
+   28 function_def: _DEF _ID $@1 _LPAREN • parameters _RPAREN _COLON _NEW_LINE $@2 body
 
-    _ASSIGN  shift, and go to state 90
+    _ID  shift, and go to state 88
 
     $default  reduce using rule 29 (parameters)
+
+    parameters              go to state 89
+    param_with_default_val  go to state 90
 
 
 State 70
 
-   27 function_def: _DEF _ID _LPAREN parameters • _RPAREN _COLON _NEW_LINE $@1 body
-   31 parameters: parameters • _COMMA _ID
-   32           | parameters • _COMMA param_with_default_val
+   62 exp: _LPAREN num_exp _RPAREN •
 
-    _COMMA   shift, and go to state 91
-    _RPAREN  shift, and go to state 92
+    $default  reduce using rule 62 (exp)
 
 
 State 71
 
-   30 parameters: param_with_default_val •
+   36 if_part: _IF num_exp _COLON _NEW_LINE • body
 
-    $default  reduce using rule 30 (parameters)
+    _INDENT  shift, and go to state 76
+
+    body  go to state 91
 
 
 State 72
 
-   61 exp: _LPAREN num_exp _RPAREN •
-
-    $default  reduce using rule 61 (exp)
-
-
-State 73
-
-   35 if_part: _IF num_exp _COLON _NEW_LINE • body
-
-    _INDENT  shift, and go to state 78
-
-    body  go to state 93
-
-
-State 74
-
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   54        | num_exp _ADD_SUB_OP num_exp •
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   55        | num_exp _ADD_SUB_OP num_exp •
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _MUL_DIV_OP  shift, and go to state 55
-
-    $default  reduce using rule 54 (num_exp)
-
-
-State 75
-
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   55        | num_exp _MUL_DIV_OP num_exp •
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
 
     $default  reduce using rule 55 (num_exp)
 
 
-State 76
+State 73
 
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   56        | num_exp _LOP num_exp •
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   56        | num_exp _MUL_DIV_OP num_exp •
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
+
+    $default  reduce using rule 56 (num_exp)
+
+
+State 74
+
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   57        | num_exp _LOP num_exp •
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
     _RELOP       shift, and go to state 57
 
-    $default  reduce using rule 56 (num_exp)
+    $default  reduce using rule 57 (num_exp)
 
 
-State 77
+State 75
 
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
-   57        | num_exp _RELOP num_exp •
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
+   58        | num_exp _RELOP num_exp •
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
 
-    $default  reduce using rule 57 (num_exp)
+    $default  reduce using rule 58 (num_exp)
 
 
-State 78
+State 76
 
-   51 body: _INDENT • statement_list _DEDENT
+   52 body: _INDENT • statement_list _DEDENT
 
     _BREAK     shift, and go to state 2
     _CONTINUE  shift, and go to state 3
@@ -1144,7 +1131,7 @@ State 78
     _WHILE     shift, and go to state 9
     _ID        shift, and go to state 10
 
-    statement_list        go to state 94
+    statement_list        go to state 92
     statement             go to state 13
     simple_statement      go to state 14
     compound_statement    go to state 15
@@ -1160,46 +1147,46 @@ State 78
     try_part              go to state 25
 
 
+State 77
+
+   43 try_part: _TRY _COLON _NEW_LINE body •
+
+    $default  reduce using rule 43 (try_part)
+
+
+State 78
+
+   41 while_part: _WHILE num_exp _COLON _NEW_LINE • $@3 body
+
+    $default  reduce using rule 40 ($@3)
+
+    $@3  go to state 93
+
+
 State 79
-
-   42 try_part: _TRY _COLON _NEW_LINE body •
-
-    $default  reduce using rule 42 (try_part)
-
-
-State 80
-
-   40 while_part: _WHILE num_exp _COLON _NEW_LINE • $@2 body
-
-    $default  reduce using rule 39 ($@2)
-
-    $@2  go to state 95
-
-
-State 81
 
    21 function_call: _ID _LPAREN arguments _RPAREN •
 
     $default  reduce using rule 21 (function_call)
 
 
-State 82
+State 80
 
    23 arguments: arguments args •
    25 args: args • _COMMA num_exp
 
-    _COMMA  shift, and go to state 96
+    _COMMA  shift, and go to state 94
 
     $default  reduce using rule 23 (arguments)
 
 
-State 83
+State 81
 
    24 args: num_exp •
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
@@ -1209,105 +1196,98 @@ State 83
     $default  reduce using rule 24 (args)
 
 
-State 84
+State 82
 
-   37 elif_part: elif_part _ELIF num_exp • _COLON _NEW_LINE body
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   38 elif_part: elif_part _ELIF num_exp • _COLON _NEW_LINE body
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
-    _COLON       shift, and go to state 97
+    _COLON       shift, and go to state 95
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
     _LOP         shift, and go to state 56
     _RELOP       shift, and go to state 57
 
 
+State 83
+
+   51 else_part: _ELSE _COLON _NEW_LINE • body
+
+    _INDENT  shift, and go to state 76
+
+    body  go to state 96
+
+
+State 84
+
+   49 finally_or_else_part: _ELSE _COLON • _NEW_LINE body
+
+    _NEW_LINE  shift, and go to state 97
+
+
 State 85
 
-   50 else_part: _ELSE _COLON _NEW_LINE • body
+   46 except_part: except_part _EXCEPT _COLON • _NEW_LINE body
 
-    _INDENT  shift, and go to state 78
-
-    body  go to state 98
+    _NEW_LINE  shift, and go to state 98
 
 
 State 86
 
-   48 finally_or_else_part: _ELSE _COLON • _NEW_LINE body
+   45 except_part: except_part _EXCEPT _ID • _COLON _NEW_LINE body
 
-    _NEW_LINE  shift, and go to state 99
+    _COLON  shift, and go to state 99
 
 
 State 87
 
-   45 except_part: except_part _EXCEPT _COLON • _NEW_LINE body
+   48 finally_or_else_part: _FINALLY _COLON • _NEW_LINE body
 
     _NEW_LINE  shift, and go to state 100
 
 
 State 88
 
-   44 except_part: except_part _EXCEPT _ID • _COLON _NEW_LINE body
+   30 parameters: _ID •
+   34 param_with_default_val: _ID • _ASSIGN num_exp
 
-    _COLON  shift, and go to state 101
+    _ASSIGN  shift, and go to state 101
+
+    $default  reduce using rule 30 (parameters)
 
 
 State 89
 
-   47 finally_or_else_part: _FINALLY _COLON • _NEW_LINE body
+   28 function_def: _DEF _ID $@1 _LPAREN parameters • _RPAREN _COLON _NEW_LINE $@2 body
+   32 parameters: parameters • _COMMA _ID
+   33           | parameters • _COMMA param_with_default_val
 
-    _NEW_LINE  shift, and go to state 102
+    _COMMA   shift, and go to state 102
+    _RPAREN  shift, and go to state 103
 
 
 State 90
 
-   33 param_with_default_val: _ID _ASSIGN • num_exp
+   31 parameters: param_with_default_val •
 
-    _NOT       shift, and go to state 28
-    _LPAREN    shift, and go to state 29
-    _ID        shift, and go to state 30
-    _NUM_BOOL  shift, and go to state 31
-    _STRING    shift, and go to state 32
-    _NONE      shift, and go to state 33
-
-    function_call  go to state 34
-    num_exp        go to state 103
-    exp            go to state 36
-    literal        go to state 37
+    $default  reduce using rule 31 (parameters)
 
 
 State 91
 
-   31 parameters: parameters _COMMA • _ID
-   32           | parameters _COMMA • param_with_default_val
+   36 if_part: _IF num_exp _COLON _NEW_LINE body •
 
-    _ID  shift, and go to state 104
-
-    param_with_default_val  go to state 105
+    $default  reduce using rule 36 (if_part)
 
 
 State 92
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN • _COLON _NEW_LINE $@1 body
-
-    _COLON  shift, and go to state 106
-
-
-State 93
-
-   35 if_part: _IF num_exp _COLON _NEW_LINE body •
-
-    $default  reduce using rule 35 (if_part)
-
-
-State 94
-
     5 statement_list: statement_list • statement
-   51 body: _INDENT statement_list • _DEDENT
+   52 body: _INDENT statement_list • _DEDENT
 
-    _DEDENT    shift, and go to state 107
+    _DEDENT    shift, and go to state 104
     _BREAK     shift, and go to state 2
     _CONTINUE  shift, and go to state 3
     _DEF       shift, and go to state 4
@@ -1333,16 +1313,16 @@ State 94
     try_part              go to state 25
 
 
-State 95
+State 93
 
-   40 while_part: _WHILE num_exp _COLON _NEW_LINE $@2 • body
+   41 while_part: _WHILE num_exp _COLON _NEW_LINE $@3 • body
 
-    _INDENT  shift, and go to state 78
+    _INDENT  shift, and go to state 76
 
-    body  go to state 108
+    body  go to state 105
 
 
-State 96
+State 94
 
    25 args: args _COMMA • num_exp
 
@@ -1354,120 +1334,114 @@ State 96
     _NONE      shift, and go to state 33
 
     function_call  go to state 34
-    num_exp        go to state 109
+    num_exp        go to state 106
     exp            go to state 36
     literal        go to state 37
 
 
+State 95
+
+   38 elif_part: elif_part _ELIF num_exp _COLON • _NEW_LINE body
+
+    _NEW_LINE  shift, and go to state 107
+
+
+State 96
+
+   51 else_part: _ELSE _COLON _NEW_LINE body •
+
+    $default  reduce using rule 51 (else_part)
+
+
 State 97
 
-   37 elif_part: elif_part _ELIF num_exp _COLON • _NEW_LINE body
+   49 finally_or_else_part: _ELSE _COLON _NEW_LINE • body
 
-    _NEW_LINE  shift, and go to state 110
+    _INDENT  shift, and go to state 76
+
+    body  go to state 108
 
 
 State 98
 
-   50 else_part: _ELSE _COLON _NEW_LINE body •
+   46 except_part: except_part _EXCEPT _COLON _NEW_LINE • body
 
-    $default  reduce using rule 50 (else_part)
+    _INDENT  shift, and go to state 76
+
+    body  go to state 109
 
 
 State 99
 
-   48 finally_or_else_part: _ELSE _COLON _NEW_LINE • body
+   45 except_part: except_part _EXCEPT _ID _COLON • _NEW_LINE body
 
-    _INDENT  shift, and go to state 78
-
-    body  go to state 111
+    _NEW_LINE  shift, and go to state 110
 
 
 State 100
 
-   45 except_part: except_part _EXCEPT _COLON _NEW_LINE • body
+   48 finally_or_else_part: _FINALLY _COLON _NEW_LINE • body
 
-    _INDENT  shift, and go to state 78
+    _INDENT  shift, and go to state 76
 
-    body  go to state 112
+    body  go to state 111
 
 
 State 101
 
-   44 except_part: except_part _EXCEPT _ID _COLON • _NEW_LINE body
+   34 param_with_default_val: _ID _ASSIGN • num_exp
 
-    _NEW_LINE  shift, and go to state 113
+    _NOT       shift, and go to state 28
+    _LPAREN    shift, and go to state 29
+    _ID        shift, and go to state 30
+    _NUM_BOOL  shift, and go to state 31
+    _STRING    shift, and go to state 32
+    _NONE      shift, and go to state 33
+
+    function_call  go to state 34
+    num_exp        go to state 112
+    exp            go to state 36
+    literal        go to state 37
 
 
 State 102
 
-   47 finally_or_else_part: _FINALLY _COLON _NEW_LINE • body
+   32 parameters: parameters _COMMA • _ID
+   33           | parameters _COMMA • param_with_default_val
 
-    _INDENT  shift, and go to state 78
+    _ID  shift, and go to state 113
 
-    body  go to state 114
+    param_with_default_val  go to state 114
 
 
 State 103
 
-   33 param_with_default_val: _ID _ASSIGN num_exp •
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN • _COLON _NEW_LINE $@2 body
 
-    _ADD_SUB_OP  shift, and go to state 54
-    _MUL_DIV_OP  shift, and go to state 55
-    _LOP         shift, and go to state 56
-    _RELOP       shift, and go to state 57
-
-    $default  reduce using rule 33 (param_with_default_val)
+    _COLON  shift, and go to state 115
 
 
 State 104
 
-   31 parameters: parameters _COMMA _ID •
-   33 param_with_default_val: _ID • _ASSIGN num_exp
+   52 body: _INDENT statement_list _DEDENT •
 
-    _ASSIGN  shift, and go to state 90
-
-    $default  reduce using rule 31 (parameters)
+    $default  reduce using rule 52 (body)
 
 
 State 105
 
-   32 parameters: parameters _COMMA param_with_default_val •
+   41 while_part: _WHILE num_exp _COLON _NEW_LINE $@3 body •
 
-    $default  reduce using rule 32 (parameters)
+    $default  reduce using rule 41 (while_part)
 
 
 State 106
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN _COLON • _NEW_LINE $@1 body
-
-    _NEW_LINE  shift, and go to state 115
-
-
-State 107
-
-   51 body: _INDENT statement_list _DEDENT •
-
-    $default  reduce using rule 51 (body)
-
-
-State 108
-
-   40 while_part: _WHILE num_exp _COLON _NEW_LINE $@2 body •
-
-    $default  reduce using rule 40 (while_part)
-
-
-State 109
-
    25 args: args _COMMA num_exp •
-   54 num_exp: num_exp • _ADD_SUB_OP num_exp
-   55        | num_exp • _MUL_DIV_OP num_exp
-   56        | num_exp • _LOP num_exp
-   57        | num_exp • _RELOP num_exp
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
     _ADD_SUB_OP  shift, and go to state 54
     _MUL_DIV_OP  shift, and go to state 55
@@ -1477,79 +1451,119 @@ State 109
     $default  reduce using rule 25 (args)
 
 
-State 110
+State 107
 
-   37 elif_part: elif_part _ELIF num_exp _COLON _NEW_LINE • body
+   38 elif_part: elif_part _ELIF num_exp _COLON _NEW_LINE • body
 
-    _INDENT  shift, and go to state 78
+    _INDENT  shift, and go to state 76
 
     body  go to state 116
 
 
+State 108
+
+   49 finally_or_else_part: _ELSE _COLON _NEW_LINE body •
+
+    $default  reduce using rule 49 (finally_or_else_part)
+
+
+State 109
+
+   46 except_part: except_part _EXCEPT _COLON _NEW_LINE body •
+
+    $default  reduce using rule 46 (except_part)
+
+
+State 110
+
+   45 except_part: except_part _EXCEPT _ID _COLON _NEW_LINE • body
+
+    _INDENT  shift, and go to state 76
+
+    body  go to state 117
+
+
 State 111
 
-   48 finally_or_else_part: _ELSE _COLON _NEW_LINE body •
+   48 finally_or_else_part: _FINALLY _COLON _NEW_LINE body •
 
     $default  reduce using rule 48 (finally_or_else_part)
 
 
 State 112
 
-   45 except_part: except_part _EXCEPT _COLON _NEW_LINE body •
+   34 param_with_default_val: _ID _ASSIGN num_exp •
+   55 num_exp: num_exp • _ADD_SUB_OP num_exp
+   56        | num_exp • _MUL_DIV_OP num_exp
+   57        | num_exp • _LOP num_exp
+   58        | num_exp • _RELOP num_exp
 
-    $default  reduce using rule 45 (except_part)
+    _ADD_SUB_OP  shift, and go to state 54
+    _MUL_DIV_OP  shift, and go to state 55
+    _LOP         shift, and go to state 56
+    _RELOP       shift, and go to state 57
+
+    $default  reduce using rule 34 (param_with_default_val)
 
 
 State 113
 
-   44 except_part: except_part _EXCEPT _ID _COLON _NEW_LINE • body
+   32 parameters: parameters _COMMA _ID •
+   34 param_with_default_val: _ID • _ASSIGN num_exp
 
-    _INDENT  shift, and go to state 78
+    _ASSIGN  shift, and go to state 101
 
-    body  go to state 117
+    $default  reduce using rule 32 (parameters)
 
 
 State 114
 
-   47 finally_or_else_part: _FINALLY _COLON _NEW_LINE body •
+   33 parameters: parameters _COMMA param_with_default_val •
 
-    $default  reduce using rule 47 (finally_or_else_part)
+    $default  reduce using rule 33 (parameters)
 
 
 State 115
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE • $@1 body
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON • _NEW_LINE $@2 body
 
-    $default  reduce using rule 26 ($@1)
-
-    $@1  go to state 118
+    _NEW_LINE  shift, and go to state 118
 
 
 State 116
 
-   37 elif_part: elif_part _ELIF num_exp _COLON _NEW_LINE body •
+   38 elif_part: elif_part _ELIF num_exp _COLON _NEW_LINE body •
 
-    $default  reduce using rule 37 (elif_part)
+    $default  reduce using rule 38 (elif_part)
 
 
 State 117
 
-   44 except_part: except_part _EXCEPT _ID _COLON _NEW_LINE body •
+   45 except_part: except_part _EXCEPT _ID _COLON _NEW_LINE body •
 
-    $default  reduce using rule 44 (except_part)
+    $default  reduce using rule 45 (except_part)
 
 
 State 118
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE $@1 • body
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE • $@2 body
 
-    _INDENT  shift, and go to state 78
+    $default  reduce using rule 27 ($@2)
 
-    body  go to state 119
+    $@2  go to state 119
 
 
 State 119
 
-   27 function_def: _DEF _ID _LPAREN parameters _RPAREN _COLON _NEW_LINE $@1 body •
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 • body
 
-    $default  reduce using rule 27 (function_def)
+    _INDENT  shift, and go to state 76
+
+    body  go to state 120
+
+
+State 120
+
+   28 function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body •
+
+    $default  reduce using rule 28 (function_def)
