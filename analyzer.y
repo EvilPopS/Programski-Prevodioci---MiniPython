@@ -7,7 +7,6 @@
 	int yylex(void);
 	int yyparse(void);
 	int yyerror(const char *);
-	void throwErr(const char *);
 	extern int yylineno;
 	int error_count = 0;
 	unsigned scope = 0;
@@ -23,6 +22,7 @@
 	int funcInds[32]; 
 	int currFuncInd = -1; 
 	int paramNum = 0;
+	bool hasReturn = false;
 	
   
   
@@ -95,11 +95,7 @@ statement
 
 simple_statement
 	: assign_statement
-	| return_statement
-		{
-			if (currFuncInd < 0)
-				err("'return' must be inside a function definition!");
-		}
+	| return_statement	{ hasReturn = true; }
 	| function_call
 	| _BREAK
 		{
@@ -128,14 +124,30 @@ assign_statement
         if(index == NO_INDEX)
            insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
         else 
-        	if (get_kind(index) == FUN || get_scope(index) != scope)
+        	if (get_kind(index) == FUN)
         		insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
       }
 	; 
 
 return_statement
 	: _RETURN
+		{
+			if (currFuncInd < 0)
+				err("'return' must be inside a function definition!");
+			int funcInd = funcInds[currFuncInd];
+			if(hasReturn && get_type(funcInd) != NONE)
+				set_type(funcInd, UNKNOWN);			
+		}
 	| _RETURN num_exp
+		{
+			if (currFuncInd < 0)
+				err("'return' must be inside a function definition!");
+			int funcInd = funcInds[currFuncInd];
+			if(hasReturn && get_type(funcInd) != $2)
+				set_type(funcInd, UNKNOWN);
+			else if(!hasReturn)
+				set_type(funcInd, $2);
+		}
 	;
 
 function_call
@@ -162,20 +174,20 @@ function_def
 	: _DEF _ID 
 		{
 		    currFuncInd++;
-			funcInds[currFuncInd] = insert_symbol($2, FUN, UNKNOWN, NO_ATR, NO_ATR, scope);
+			funcInds[currFuncInd] = insert_symbol($2, FUN, NONE, NO_ATR, NO_ATR, scope);
+	  		scope++;
 		}
 	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
 		{
 			set_atr1(funcInds[currFuncInd], paramNum);
 	    	paramNum = 0;
-	  		scope++;
 		}	
 	  body 
 	  	{
-				print_symtab();
-	  	        clear_symbols(funcInds[currFuncInd] + 1);
-	  	        currFuncInd--;
-	  	        scope--;
+		    clear_symbols(funcInds[currFuncInd] + 1);
+		    currFuncInd--;
+		    scope--;
+		    hasReturn = false;
 	  	}
 	;
 
@@ -183,16 +195,16 @@ parameters
 	: /* no params */
 	| _ID  						
 		{ 
-			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
+			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			paramNum++; 
 		}
 	| param_with_default_val	{ paramNum++; }
 	| parameters _COMMA _ID		
 		{
 			if (valuedParamDef)
-				throwErr("Parameters without default values cannot be defined after parameter with set default value.");
+				err("Parameters without default values cannot be defined after parameter with set default value.");
 
-			insert_symbol($3, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
+			insert_symbol($3, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			paramNum++; 
 		}
 	| parameters _COMMA param_with_default_val 	{ paramNum++; }
@@ -201,7 +213,7 @@ parameters
 param_with_default_val
 	: _ID _ASSIGN num_exp
 		{
-			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope+1);
+			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			valuedParamDef = true;
 		}
 	;
@@ -211,12 +223,31 @@ if_statement
 	;
 
 if_part
-	: _IF num_exp _COLON _NEW_LINE body
+	: _IF num_exp _COLON _NEW_LINE
+		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
+		}
+	 body
+		{
+			clear_symbols($<i>5);	
+			scope--;
+		}
 	;
 	
 elif_part
 	: /* no elif part*/
-	| elif_part _ELIF num_exp _COLON _NEW_LINE body
+	| elif_part _ELIF num_exp _COLON _NEW_LINE
+		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
+		}
+	 body
+		{
+			clear_symbols($<i>6);	
+			scope--;
+		}
+
 	;
 
 while_statement
@@ -226,10 +257,14 @@ while_statement
 while_part
 	: _WHILE num_exp _COLON _NEW_LINE 
 		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
 			loopCounter++;
 		}
 	  body
 		{
+			clear_symbols($<i>5);	
+			scope--;
 			loopCounter--;
 		}
 	;
@@ -239,24 +274,67 @@ try_except_statement
 	;
 
 try_part
-	: _TRY _COLON _NEW_LINE body 
+	: _TRY _COLON _NEW_LINE 
+		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
+			loopCounter++;
+		}
+	  body
+		{
+			clear_symbols($<i>4);	
+			scope--;
+			loopCounter--;
+		} 
 	;
 
 except_part
 	: /* no except block */
-	| except_part _EXCEPT _ID _COLON _NEW_LINE body
-	| except_part _EXCEPT _COLON _NEW_LINE body
+	| except_part _EXCEPT _ID
+	  	{
+  	      	int index = lookup_symbol_all_kinds($3);
+		    if(index == NO_INDEX)
+		       insert_symbol($3, VAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+		    else 
+		    	if (get_kind(index) == FUN)
+		    		insert_symbol($3, VAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+	  	}
+	  except_finally_body
+	| except_part _EXCEPT except_finally_body
 	;
-	
+
+except_finally_body
+	: _COLON _NEW_LINE
+		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
+			loopCounter++;
+		}
+	  body
+		{
+			clear_symbols($<i>3);	
+			scope--;
+			loopCounter--;
+		}
+	;
 finally_or_else_part
 	: /* no else or finally part */
-	| _FINALLY _COLON _NEW_LINE body
-	| _ELSE _COLON _NEW_LINE body
+	| _FINALLY except_finally_body
+	| _ELSE except_finally_body
 	;
 
 else_part
 	: /* no else part*/
-	|_ELSE _COLON _NEW_LINE body
+	|_ELSE _COLON _NEW_LINE 
+		{
+			$<i>$ = get_last_element()+1; 
+			scope++;
+		}
+	 body
+		{
+			clear_symbols($<i>4);	
+			scope--;
+		}
 	;
 
 body
@@ -341,9 +419,9 @@ exp
 	: literal	 { $$ = $1; }
 	| _ID %prec VAR_ID
 		{
-			int idInd = lookup_symbol($1, VAR|PAR);
+			int idInd = lookup_symbol_var_par($1);
 			if (idInd == NO_INDEX)
-				err("Variable %s does not exist!", $1);
+				err("Variable '%s' does not exist!", $1);
 			$$ = get_type(idInd); 
 		}
 	| function_call		{ $$ = $1; }

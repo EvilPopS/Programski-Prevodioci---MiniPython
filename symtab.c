@@ -77,6 +77,16 @@ int lookup_symbol_all_kinds(char *name) {
   return -1;
 }
 
+int lookup_symbol_var_par(char *name) {
+  int i;
+  for(i = first_empty - 1; i > FUN_REG; i--) {
+    if(strcmp(symbol_table[i].name, name) == 0 && (symbol_table[i].kind == PAR || symbol_table[i].kind == VAR))
+       return i;
+  }
+  return -1;
+}
+
+
 void set_name(int index, char *name) {
   if(index > -1 && index < SYMBOL_TABLE_LENGTH)
     symbol_table[index].name = name;
