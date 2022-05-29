@@ -21,8 +21,10 @@
 
 	int funcInds[32]; 
 	int currFuncInd = -1; 
-	int paramNum = 0;
+	int defParamNum = 0;
+	int nonDefParamNum = 0;
 	bool hasReturn = false;
+	int argsNum = 0;
 	
   
   
@@ -153,21 +155,29 @@ return_statement
 function_call
 	: _ID _LPAREN arguments _RPAREN
       {
-        int funcInd = lookup_symbol($1, VAR|PAR);
-        if(funcInd == NO_INDEX && get_kind(funcInd))
+        int funcInd = lookup_symbol_all_kinds($1);
+        if (funcInd == NO_INDEX || get_kind(funcInd) != FUN)
            err("There is no defined function of name %s", $1);
+          
+        int nonDefParams = get_atr1(funcInd);
+        int defParams = get_atr2(funcInd);
+        if (argsNum > nonDefParams+defParams)
+        	err("Function given more arguments than the definition has parameters!");
+        else if (argsNum < nonDefParams)
+        	err("Function given less arguments than the definition has non deafult parameters!");
+
       	$$ = get_type(funcInd);
       }
 	;
 	
 arguments
 	: /* no arguments */
-	| arguments args 
+	| arguments args { argsNum++; }
 	;
 	
 args
 	: num_exp
-	| args _COMMA num_exp
+	| _COMMA num_exp
 	;
 
 function_def
@@ -179,8 +189,10 @@ function_def
 		}
 	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
 		{
-			set_atr1(funcInds[currFuncInd], paramNum);
-	    	paramNum = 0;
+			set_atr1(funcInds[currFuncInd], nonDefParamNum);
+			set_atr2(funcInds[currFuncInd], defParamNum);
+	    	nonDefParamNum = 0;
+	    	defParamNum = 0;
 		}	
 	  body 
 	  	{
@@ -196,18 +208,18 @@ parameters
 	| _ID  						
 		{ 
 			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
-			paramNum++; 
+			nonDefParamNum++; 
 		}
-	| param_with_default_val	{ paramNum++; }
+	| param_with_default_val
 	| parameters _COMMA _ID		
 		{
 			if (valuedParamDef)
 				err("Parameters without default values cannot be defined after parameter with set default value.");
 
 			insert_symbol($3, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
-			paramNum++; 
+			nonDefParamNum++; 
 		}
-	| parameters _COMMA param_with_default_val 	{ paramNum++; }
+	| parameters _COMMA param_with_default_val
 	;
 	
 param_with_default_val
@@ -215,6 +227,7 @@ param_with_default_val
 		{
 			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			valuedParamDef = true;
+			defParamNum++;
 		}
 	;
 

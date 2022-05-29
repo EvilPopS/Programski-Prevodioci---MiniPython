@@ -1,24 +1,4 @@
-a  =2
-if a == 1:
-	while a < 2:
-		b = 2
-		try:
-			b = 1
-		except as:
-			a = 3
-		finally:
-			a = 3
-	else:
-		a = 2
-elif 1 == 2:
+def abc(b, v, c = 2):
 	pass
-else:
-	gas = 1
-
-
-def abcd():
-	a = 2
-	if (a == 1):
-		return 
-	return a
-		
+	
+abc(2, 3, 4)
