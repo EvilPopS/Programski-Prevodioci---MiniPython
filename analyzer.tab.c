@@ -71,16 +71,22 @@
 
 	#include <stdio.h>
 	#include <stdbool.h>
+	#include <stdlib.h>
 	#include "defs.h"
 	#include "symtab.h"
-
+	#include "codegen.h"
+  
 	int yylex(void);
 	int yyparse(void);
 	int yyerror(const char *);
 	extern int yylineno;
 	int error_count = 0;
 	unsigned scope = 0;
-
+	
+	int out_lin = 0;
+	int lab_num = -1;
+  	FILE *output;
+  
 	char char_buffer[CHAR_BUFFER_LENGTH];
 
 	// Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
@@ -99,7 +105,7 @@
   
   
 
-#line 103 "analyzer.tab.c"
+#line 109 "analyzer.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -591,14 +597,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    83,    83,    84,    85,    89,    90,    94,    95,    99,
-     100,   101,   102,   107,   112,   116,   117,   118,   119,   123,
-     135,   143,   156,   174,   175,   179,   180,   185,   191,   184,
-     207,   208,   213,   214,   222,   226,   235,   240,   239,   252,
-     254,   253,   267,   272,   271,   286,   291,   290,   305,   307,
-     306,   316,   321,   320,   334,   335,   336,   340,   342,   341,
-     354,   359,   360,   361,   382,   403,   413,   432,   433,   440,
-     441,   445,   446,   447
+       0,    89,    89,    90,    91,    95,    96,   100,   101,   105,
+     106,   107,   108,   113,   118,   122,   123,   124,   125,   129,
+     144,   152,   166,   184,   185,   189,   190,   195,   201,   194,
+     217,   218,   223,   224,   232,   236,   245,   250,   249,   262,
+     264,   263,   277,   282,   281,   296,   301,   300,   315,   317,
+     316,   326,   331,   330,   344,   345,   346,   350,   352,   351,
+     364,   369,   370,   375,   407,   428,   438,   457,   458,   465,
+     466,   470,   471,   472
 };
 #endif
 
@@ -1523,31 +1529,31 @@ yyreduce:
   switch (yyn)
     {
   case 10: /* simple_statement: return_statement  */
-#line 100 "analyzer.y"
+#line 106 "analyzer.y"
                                 { hasReturn = true; }
-#line 1529 "analyzer.tab.c"
+#line 1535 "analyzer.tab.c"
     break;
 
   case 12: /* simple_statement: _BREAK  */
-#line 103 "analyzer.y"
+#line 109 "analyzer.y"
                 {
 			if (loopCounter == 0)
 				err("'break' must be inside while statement!");
 		}
-#line 1538 "analyzer.tab.c"
+#line 1544 "analyzer.tab.c"
     break;
 
   case 13: /* simple_statement: _CONTINUE  */
-#line 108 "analyzer.y"
+#line 114 "analyzer.y"
                 {
 			if (loopCounter == 0)
 				err("'continue' must be inside while statement!");
 		}
-#line 1547 "analyzer.tab.c"
+#line 1553 "analyzer.tab.c"
     break;
 
   case 19: /* assign_statement: _ID _ASSIGN num_exp  */
-#line 124 "analyzer.y"
+#line 130 "analyzer.y"
       {
       	int index = lookup_symbol_all_kinds((yyvsp[-2].s));
         if(index == NO_INDEX)
@@ -1555,12 +1561,15 @@ yyreduce:
         else 
         	if (get_kind(index) == FUN)
         		insert_symbol((yyvsp[-2].s), VAR, (yyvsp[0].i), NO_ATR, NO_ATR, scope);
+
+		// Deo za generisanje koda
+        
       }
-#line 1560 "analyzer.tab.c"
+#line 1569 "analyzer.tab.c"
     break;
 
   case 20: /* return_statement: _RETURN  */
-#line 136 "analyzer.y"
+#line 145 "analyzer.y"
                 {
 			if (currFuncInd < 0)
 				err("'return' must be inside a function definition!");
@@ -1568,25 +1577,26 @@ yyreduce:
 			if(hasReturn && get_type(funcInd) != NONE)
 				set_type(funcInd, UNKNOWN);			
 		}
-#line 1572 "analyzer.tab.c"
+#line 1581 "analyzer.tab.c"
     break;
 
   case 21: /* return_statement: _RETURN num_exp  */
-#line 144 "analyzer.y"
+#line 153 "analyzer.y"
                 {
 			if (currFuncInd < 0)
 				err("'return' must be inside a function definition!");
+			
 			int funcInd = funcInds[currFuncInd];
 			if(hasReturn && get_type(funcInd) != (yyvsp[0].i))
 				set_type(funcInd, UNKNOWN);
 			else if(!hasReturn)
 				set_type(funcInd, (yyvsp[0].i));
 		}
-#line 1586 "analyzer.tab.c"
+#line 1596 "analyzer.tab.c"
     break;
 
   case 22: /* function_call: _ID _LPAREN arguments _RPAREN  */
-#line 157 "analyzer.y"
+#line 167 "analyzer.y"
       {
         int funcInd = lookup_symbol_all_kinds((yyvsp[-3].s));
         if (funcInd == NO_INDEX || get_kind(funcInd) != FUN)
@@ -1597,62 +1607,62 @@ yyreduce:
         if (argsNum > nonDefParams+defParams)
         	err("Function given more arguments than the definition has parameters!");
         else if (argsNum < nonDefParams)
-        	err("Function given less arguments than the definition has non deafult parameters!");
+        	err("Function given less arguments than the definition has non default parameters!");
 
       	(yyval.i) = get_type(funcInd);
       }
-#line 1605 "analyzer.tab.c"
+#line 1615 "analyzer.tab.c"
     break;
 
   case 24: /* arguments: arguments args  */
-#line 175 "analyzer.y"
+#line 185 "analyzer.y"
                          { argsNum++; }
-#line 1611 "analyzer.tab.c"
+#line 1621 "analyzer.tab.c"
     break;
 
   case 27: /* $@1: %empty  */
-#line 185 "analyzer.y"
+#line 195 "analyzer.y"
                 {
 		    currFuncInd++;
 			funcInds[currFuncInd] = insert_symbol((yyvsp[0].s), FUN, NONE, NO_ATR, NO_ATR, scope);
 	  		scope++;
 		}
-#line 1621 "analyzer.tab.c"
+#line 1631 "analyzer.tab.c"
     break;
 
   case 28: /* $@2: %empty  */
-#line 191 "analyzer.y"
+#line 201 "analyzer.y"
                 {
 			set_atr1(funcInds[currFuncInd], nonDefParamNum);
 			set_atr2(funcInds[currFuncInd], defParamNum);
 	    	nonDefParamNum = 0;
 	    	defParamNum = 0;
 		}
-#line 1632 "analyzer.tab.c"
+#line 1642 "analyzer.tab.c"
     break;
 
   case 29: /* function_def: _DEF _ID $@1 _LPAREN parameters _RPAREN _COLON _NEW_LINE $@2 body  */
-#line 198 "analyzer.y"
+#line 208 "analyzer.y"
                 {
 		    clear_symbols(funcInds[currFuncInd] + 1);
 		    currFuncInd--;
 		    scope--;
 		    hasReturn = false;
 	  	}
-#line 1643 "analyzer.tab.c"
+#line 1653 "analyzer.tab.c"
     break;
 
   case 31: /* parameters: _ID  */
-#line 209 "analyzer.y"
+#line 219 "analyzer.y"
                 { 
 			insert_symbol((yyvsp[0].s), PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			nonDefParamNum++; 
 		}
-#line 1652 "analyzer.tab.c"
+#line 1662 "analyzer.tab.c"
     break;
 
   case 33: /* parameters: parameters _COMMA _ID  */
-#line 215 "analyzer.y"
+#line 225 "analyzer.y"
                 {
 			if (valuedParamDef)
 				err("Parameters without default values cannot be defined after parameter with set default value.");
@@ -1660,97 +1670,97 @@ yyreduce:
 			insert_symbol((yyvsp[0].s), PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			nonDefParamNum++; 
 		}
-#line 1664 "analyzer.tab.c"
+#line 1674 "analyzer.tab.c"
     break;
 
   case 35: /* param_with_default_val: _ID _ASSIGN num_exp  */
-#line 227 "analyzer.y"
+#line 237 "analyzer.y"
                 {
 			insert_symbol((yyvsp[-2].s), PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 			valuedParamDef = true;
 			defParamNum++;
 		}
-#line 1674 "analyzer.tab.c"
+#line 1684 "analyzer.tab.c"
     break;
 
   case 37: /* @3: %empty  */
-#line 240 "analyzer.y"
+#line 250 "analyzer.y"
                 {
 			(yyval.i) = get_last_element()+1; 
 			scope++;
 		}
-#line 1683 "analyzer.tab.c"
+#line 1693 "analyzer.tab.c"
     break;
 
   case 38: /* if_part: _IF num_exp _COLON _NEW_LINE @3 body  */
-#line 245 "analyzer.y"
+#line 255 "analyzer.y"
                 {
 			clear_symbols((yyvsp[-1].i));	
 			scope--;
 		}
-#line 1692 "analyzer.tab.c"
+#line 1702 "analyzer.tab.c"
     break;
 
   case 40: /* @4: %empty  */
-#line 254 "analyzer.y"
+#line 264 "analyzer.y"
                 {
 			(yyval.i) = get_last_element()+1; 
 			scope++;
 		}
-#line 1701 "analyzer.tab.c"
+#line 1711 "analyzer.tab.c"
     break;
 
   case 41: /* elif_part: elif_part _ELIF num_exp _COLON _NEW_LINE @4 body  */
-#line 259 "analyzer.y"
+#line 269 "analyzer.y"
                 {
 			clear_symbols((yyvsp[-1].i));	
 			scope--;
-		}
-#line 1710 "analyzer.tab.c"
-    break;
-
-  case 43: /* @5: %empty  */
-#line 272 "analyzer.y"
-                {
-			(yyval.i) = get_last_element()+1; 
-			scope++;
-			loopCounter++;
 		}
 #line 1720 "analyzer.tab.c"
     break;
 
-  case 44: /* while_part: _WHILE num_exp _COLON _NEW_LINE @5 body  */
-#line 278 "analyzer.y"
-                {
-			clear_symbols((yyvsp[-1].i));	
-			scope--;
-			loopCounter--;
-		}
-#line 1730 "analyzer.tab.c"
-    break;
-
-  case 46: /* @6: %empty  */
-#line 291 "analyzer.y"
+  case 43: /* @5: %empty  */
+#line 282 "analyzer.y"
                 {
 			(yyval.i) = get_last_element()+1; 
 			scope++;
 			loopCounter++;
 		}
-#line 1740 "analyzer.tab.c"
+#line 1730 "analyzer.tab.c"
     break;
 
-  case 47: /* try_part: _TRY _COLON _NEW_LINE @6 body  */
-#line 297 "analyzer.y"
+  case 44: /* while_part: _WHILE num_exp _COLON _NEW_LINE @5 body  */
+#line 288 "analyzer.y"
                 {
 			clear_symbols((yyvsp[-1].i));	
 			scope--;
 			loopCounter--;
 		}
+#line 1740 "analyzer.tab.c"
+    break;
+
+  case 46: /* @6: %empty  */
+#line 301 "analyzer.y"
+                {
+			(yyval.i) = get_last_element()+1; 
+			scope++;
+			loopCounter++;
+		}
 #line 1750 "analyzer.tab.c"
     break;
 
-  case 49: /* $@7: %empty  */
+  case 47: /* try_part: _TRY _COLON _NEW_LINE @6 body  */
 #line 307 "analyzer.y"
+                {
+			clear_symbols((yyvsp[-1].i));	
+			scope--;
+			loopCounter--;
+		}
+#line 1760 "analyzer.tab.c"
+    break;
+
+  case 49: /* $@7: %empty  */
+#line 317 "analyzer.y"
                 {
   	      	int index = lookup_symbol_all_kinds((yyvsp[0].s));
 		    if(index == NO_INDEX)
@@ -1759,89 +1769,103 @@ yyreduce:
 		    	if (get_kind(index) == FUN)
 		    		insert_symbol((yyvsp[0].s), VAR, UNKNOWN, NO_ATR, NO_ATR, scope);
 	  	}
-#line 1763 "analyzer.tab.c"
+#line 1773 "analyzer.tab.c"
     break;
 
   case 52: /* @8: %empty  */
-#line 321 "analyzer.y"
+#line 331 "analyzer.y"
                 {
 			(yyval.i) = get_last_element()+1; 
 			scope++;
 			loopCounter++;
 		}
-#line 1773 "analyzer.tab.c"
+#line 1783 "analyzer.tab.c"
     break;
 
   case 53: /* except_finally_body: _COLON _NEW_LINE @8 body  */
-#line 327 "analyzer.y"
+#line 337 "analyzer.y"
                 {
 			clear_symbols((yyvsp[-1].i));	
 			scope--;
 			loopCounter--;
 		}
-#line 1783 "analyzer.tab.c"
+#line 1793 "analyzer.tab.c"
     break;
 
   case 58: /* @9: %empty  */
-#line 342 "analyzer.y"
+#line 352 "analyzer.y"
                 {
 			(yyval.i) = get_last_element()+1; 
 			scope++;
 		}
-#line 1792 "analyzer.tab.c"
+#line 1802 "analyzer.tab.c"
     break;
 
   case 59: /* else_part: _ELSE _COLON _NEW_LINE @9 body  */
-#line 347 "analyzer.y"
+#line 357 "analyzer.y"
                 {
 			clear_symbols((yyvsp[-1].i));	
 			scope--;
 		}
-#line 1801 "analyzer.tab.c"
+#line 1811 "analyzer.tab.c"
     break;
 
   case 61: /* num_exp: exp  */
-#line 359 "analyzer.y"
+#line 369 "analyzer.y"
                         { (yyval.i) = (yyvsp[0].i); }
-#line 1807 "analyzer.tab.c"
+#line 1817 "analyzer.tab.c"
     break;
 
   case 62: /* num_exp: _NOT num_exp  */
-#line 360 "analyzer.y"
-                        { (yyval.i) = NUM_BOOL; }
-#line 1813 "analyzer.tab.c"
+#line 371 "analyzer.y"
+                { 
+			set_type((yyvsp[0].i), NUM_BOOL);
+			(yyval.i) = (yyvsp[0].i); 
+		}
+#line 1826 "analyzer.tab.c"
     break;
 
   case 63: /* num_exp: num_exp _ADD_SUB_OP num_exp  */
-#line 362 "analyzer.y"
+#line 376 "analyzer.y"
                 {
-			int lt = (yyvsp[-2].i);
-			int rt = (yyvsp[0].i);
-
+			int lt = get_type((yyvsp[-2].i));
+			int rt = get_type((yyvsp[0].i));
+			int newType = UNKNOWN;
+			
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
 					err("Invalid operator for operands of type 'None'!");
 				else if (lt == STRING && rt == STRING) {
 					if ((yyvsp[-1].i) == SUB)
 						err("Invalid operator '-' for operands of type 'string' and 'string'!");
-					(yyval.i) = STRING;
+					newType = STRING;
 				}
 				else if (lt == NUM_BOOL && rt == NUM_BOOL)
-					(yyval.i) = NUM_BOOL;
+					newType = NUM_BOOL;
 				else
 					err("Invalid operator '+'/'-' for operands of type 'number'/'boolean' and 'string'!");
 			}
-			else 
-				(yyval.i) = UNKNOWN;
+			
+			// Code gen part
+		    code("\n\t\t%s\t", ar_instructions[(yyvsp[-1].i)]);
+		    gen_sym_name((yyvsp[-2].i));
+		    code(",");
+		    gen_sym_name((yyvsp[0].i));
+		    code(",");
+		    free_if_reg((yyvsp[0].i));
+		    free_if_reg((yyvsp[-2].i));
+		    (yyval.i) = take_reg();
+		    gen_sym_name((yyval.i));
+		    set_type((yyval.i), newType);
 		}
-#line 1838 "analyzer.tab.c"
+#line 1862 "analyzer.tab.c"
     break;
 
   case 64: /* num_exp: num_exp _MUL_DIV_OP num_exp  */
-#line 383 "analyzer.y"
+#line 408 "analyzer.y"
                 {
-			int lt = (yyvsp[-2].i);
-			int rt = (yyvsp[0].i);
+			int lt = get_type((yyvsp[-2].i));
+			int rt = get_type((yyvsp[0].i));
 
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
@@ -1859,28 +1883,28 @@ yyreduce:
 			else 
 				(yyval.i) = UNKNOWN;
 		}
-#line 1863 "analyzer.tab.c"
+#line 1887 "analyzer.tab.c"
     break;
 
   case 65: /* num_exp: num_exp _LOP num_exp  */
-#line 404 "analyzer.y"
+#line 429 "analyzer.y"
                 {
-			int lt = (yyvsp[-2].i);
-			int rt = (yyvsp[0].i);
+			int lt = get_type((yyvsp[-2].i));
+			int rt = get_type((yyvsp[0].i));
 
 			if ((yyvsp[-1].i) == AND)
 				return rt;
 			else 
 				return lt;			
 		}
-#line 1877 "analyzer.tab.c"
+#line 1901 "analyzer.tab.c"
     break;
 
   case 66: /* num_exp: num_exp _RELOP num_exp  */
-#line 414 "analyzer.y"
+#line 439 "analyzer.y"
                 {
-			int lt = (yyvsp[-2].i);
-			int rt = (yyvsp[0].i);
+			int lt = get_type((yyvsp[-2].i));
+			int rt = get_type((yyvsp[0].i));
 
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
@@ -1893,58 +1917,58 @@ yyreduce:
 			else 
 				(yyval.i) = UNKNOWN;
 		}
-#line 1897 "analyzer.tab.c"
+#line 1921 "analyzer.tab.c"
     break;
 
   case 67: /* exp: literal  */
-#line 432 "analyzer.y"
+#line 457 "analyzer.y"
                          { (yyval.i) = (yyvsp[0].i); }
-#line 1903 "analyzer.tab.c"
+#line 1927 "analyzer.tab.c"
     break;
 
   case 68: /* exp: _ID  */
-#line 434 "analyzer.y"
+#line 459 "analyzer.y"
                 {
 			int idInd = lookup_symbol_var_par((yyvsp[0].s));
 			if (idInd == NO_INDEX)
 				err("Variable '%s' does not exist!", (yyvsp[0].s));
 			(yyval.i) = get_type(idInd); 
 		}
-#line 1914 "analyzer.tab.c"
-    break;
-
-  case 69: /* exp: function_call  */
-#line 440 "analyzer.y"
-                                { (yyval.i) = (yyvsp[0].i); }
-#line 1920 "analyzer.tab.c"
-    break;
-
-  case 70: /* exp: _LPAREN num_exp _RPAREN  */
-#line 441 "analyzer.y"
-                                        { (yyval.i) = (yyvsp[-1].i); }
-#line 1926 "analyzer.tab.c"
-    break;
-
-  case 71: /* literal: _NUM_BOOL  */
-#line 445 "analyzer.y"
-                        { (yyval.i) = (yyvsp[0].i); }
-#line 1932 "analyzer.tab.c"
-    break;
-
-  case 72: /* literal: _STRING  */
-#line 446 "analyzer.y"
-                        { (yyval.i) = (yyvsp[0].i); }
 #line 1938 "analyzer.tab.c"
     break;
 
-  case 73: /* literal: _NONE  */
-#line 447 "analyzer.y"
-                        { (yyval.i) = (yyvsp[0].i); }
+  case 69: /* exp: function_call  */
+#line 465 "analyzer.y"
+                                { (yyval.i) = (yyvsp[0].i); }
 #line 1944 "analyzer.tab.c"
     break;
 
+  case 70: /* exp: _LPAREN num_exp _RPAREN  */
+#line 466 "analyzer.y"
+                                        { (yyval.i) = (yyvsp[-1].i); }
+#line 1950 "analyzer.tab.c"
+    break;
 
-#line 1948 "analyzer.tab.c"
+  case 71: /* literal: _NUM_BOOL  */
+#line 470 "analyzer.y"
+                        { (yyval.i) = insert_literal((yyvsp[0].s), NUM_BOOL, scope); }
+#line 1956 "analyzer.tab.c"
+    break;
+
+  case 72: /* literal: _STRING  */
+#line 471 "analyzer.y"
+                        { (yyval.i) = insert_literal((yyvsp[0].s), STRING, scope); }
+#line 1962 "analyzer.tab.c"
+    break;
+
+  case 73: /* literal: _NONE  */
+#line 472 "analyzer.y"
+                        { (yyval.i) = insert_literal((yyvsp[0].s), NONE, scope); }
+#line 1968 "analyzer.tab.c"
+    break;
+
+
+#line 1972 "analyzer.tab.c"
 
       default: break;
     }
@@ -2168,21 +2192,25 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 451 "analyzer.y"
+#line 476 "analyzer.y"
 
 
 int main() {
 	int synerr;
 	init_symtab();
 
+	output = fopen("output.asm", "w+");
 	synerr = yyparse();
 
 	clear_symtab();
-
+	fclose(output);
+		
 	if(synerr)
-		return -1; 
+		return -1;  //syntax error
+	else if(error_count)
+		return error_count & 127; //semantic errors
 	else
-		return error_count; 
+		return 0; //OK 
 }
 int yyerror(const char *s) {
   fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);

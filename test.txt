@@ -1,4 +1,0 @@
-def abc(b, v, c = 2):
-	pass
-	
-abc(2, 3, 4)

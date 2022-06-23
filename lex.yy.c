@@ -1106,27 +1106,27 @@ YY_RULE_SETUP
 case 42:
 YY_RULE_SETUP
 #line 102 "analyzer.l"
-{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+{ yylval.s = strdup(yytext); return _NUM_BOOL; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
 #line 103 "analyzer.l"
-{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+{ yylval.s = strdup(yytext); return _NUM_BOOL; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
 #line 104 "analyzer.l"
-{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+{ yylval.s = strdup(yytext); return _NUM_BOOL; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
 #line 105 "analyzer.l"
-{ yylval.i = STRING; return _STRING; }
+{ yylval.s = strdup(yytext); return _STRING; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
 #line 106 "analyzer.l"
-{ yylval.i = STRING; return _STRING; }
+{ yylval.s = strdup(yytext); return _STRING; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP

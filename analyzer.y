@@ -1,16 +1,22 @@
 %{
 	#include <stdio.h>
 	#include <stdbool.h>
+	#include <stdlib.h>
 	#include "defs.h"
 	#include "symtab.h"
-
+	#include "codegen.h"
+  
 	int yylex(void);
 	int yyparse(void);
 	int yyerror(const char *);
 	extern int yylineno;
 	int error_count = 0;
 	unsigned scope = 0;
-
+	
+	int out_lin = 0;
+	int lab_num = -1;
+  	FILE *output;
+  
 	char char_buffer[CHAR_BUFFER_LENGTH];
 
 	// Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
@@ -59,7 +65,7 @@
 %token <i> _ADD_SUB_OP _MUL_DIV_OP _LOP _RELOP
 
 %token <s> _ID
-%token <i> _NUM_BOOL _STRING _NONE
+%token <s> _NUM_BOOL _STRING _NONE
 
 
 %type <i> num_exp exp function_call literal
@@ -128,6 +134,9 @@ assign_statement
         else 
         	if (get_kind(index) == FUN)
         		insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
+
+		// Deo za generisanje koda
+        
       }
 	; 
 
@@ -144,6 +153,7 @@ return_statement
 		{
 			if (currFuncInd < 0)
 				err("'return' must be inside a function definition!");
+			
 			int funcInd = funcInds[currFuncInd];
 			if(hasReturn && get_type(funcInd) != $2)
 				set_type(funcInd, UNKNOWN);
@@ -164,7 +174,7 @@ function_call
         if (argsNum > nonDefParams+defParams)
         	err("Function given more arguments than the definition has parameters!");
         else if (argsNum < nonDefParams)
-        	err("Function given less arguments than the definition has non deafult parameters!");
+        	err("Function given less arguments than the definition has non default parameters!");
 
       	$$ = get_type(funcInd);
       }
@@ -357,32 +367,47 @@ body
 
 num_exp
 	: exp       	{ $$ = $1; }
-	| _NOT num_exp  { $$ = NUM_BOOL; }
+	| _NOT num_exp  
+		{ 
+			set_type($2, NUM_BOOL);
+			$$ = $2; 
+		}
 	| num_exp _ADD_SUB_OP num_exp
 		{
-			int lt = $1;
-			int rt = $3;
-
+			int lt = get_type($1);
+			int rt = get_type($3);
+			int newType = UNKNOWN;
+			
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
 					err("Invalid operator for operands of type 'None'!");
 				else if (lt == STRING && rt == STRING) {
 					if ($2 == SUB)
 						err("Invalid operator '-' for operands of type 'string' and 'string'!");
-					$$ = STRING;
+					newType = STRING;
 				}
 				else if (lt == NUM_BOOL && rt == NUM_BOOL)
-					$$ = NUM_BOOL;
+					newType = NUM_BOOL;
 				else
 					err("Invalid operator '+'/'-' for operands of type 'number'/'boolean' and 'string'!");
 			}
-			else 
-				$$ = UNKNOWN;
+			
+			// Code gen part
+		    code("\n\t\t%s\t", ar_instructions[$2]);
+		    gen_sym_name($1);
+		    code(",");
+		    gen_sym_name($3);
+		    code(",");
+		    free_if_reg($3);
+		    free_if_reg($1);
+		    $$ = take_reg();
+		    gen_sym_name($$);
+		    set_type($$, newType);
 		}
 	| num_exp _MUL_DIV_OP num_exp
 		{
-			int lt = $1;
-			int rt = $3;
+			int lt = get_type($1);
+			int rt = get_type($3);
 
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
@@ -402,8 +427,8 @@ num_exp
 		}	
 	| num_exp _LOP num_exp
 		{
-			int lt = $1;
-			int rt = $3;
+			int lt = get_type($1);
+			int rt = get_type($3);
 
 			if ($2 == AND)
 				return rt;
@@ -412,8 +437,8 @@ num_exp
 		}
 	| num_exp _RELOP num_exp
 		{
-			int lt = $1;
-			int rt = $3;
+			int lt = get_type($1);
+			int rt = get_type($3);
 
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
@@ -442,9 +467,9 @@ exp
 	;
 	
 literal
-	: _NUM_BOOL	{ $$ = $1; }
-	| _STRING	{ $$ = $1; }
-	| _NONE		{ $$ = $1; }
+	: _NUM_BOOL	{ $$ = insert_literal($1, NUM_BOOL, scope); }
+	| _STRING	{ $$ = insert_literal($1, STRING, scope); }
+	| _NONE		{ $$ = insert_literal($1, NONE, scope); }
 	;
 
 	
@@ -454,14 +479,18 @@ int main() {
 	int synerr;
 	init_symtab();
 
+	output = fopen("output.asm", "w+");
 	synerr = yyparse();
 
 	clear_symtab();
-
+	fclose(output);
+		
 	if(synerr)
-		return -1; 
+		return -1;  //syntax error
+	else if(error_count)
+		return error_count & 127; //semantic errors
 	else
-		return error_count; 
+		return 0; //OK 
 }
 int yyerror(const char *s) {
   fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);

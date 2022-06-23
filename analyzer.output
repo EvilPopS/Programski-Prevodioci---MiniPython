@@ -157,9 +157,9 @@ Terminals, with rules where they appear
     _LOP <i> (285) 64
     _RELOP <i> (286) 65
     _ID <s> (287) 18 21 28 30 32 34 49 67
-    _NUM_BOOL <i> (288) 70
-    _STRING <i> (289) 71
-    _NONE <i> (290) 72
+    _NUM_BOOL <s> (288) 70
+    _STRING <s> (289) 71
+    _NONE <s> (290) 72
     VAR_ID (291)
 
 

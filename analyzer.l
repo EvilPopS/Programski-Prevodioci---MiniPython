@@ -98,11 +98,11 @@
 "!="    { yylval.i = NEQ;  return _RELOP; }
 
 [a-zA-Z_][a-zA-Z0-9_]* 			{ yylval.s = strdup(yytext); return _ID; }
-[+]?[0-9]{1,10}     			{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
-[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.i = NUM_BOOL; return _NUM_BOOL; }
-[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.i = NUM_BOOL; return _NUM_BOOL; }
-\"[^"\n]*\"     				{ yylval.i = STRING; return _STRING; }
-\'[^'\n]*\'     				{ yylval.i = STRING; return _STRING; }
+[+]?[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _NUM_BOOL; }
+[+]?[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
+[+]?[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
+\"[^"\n]*\"     				{ yylval.s = strdup(yytext); return _STRING; }
+\'[^'\n]*\'     				{ yylval.s = strdup(yytext); return _STRING; }
 
 .			{ printf("line %d: LEXICAL ERROR on char %c\n", yylineno, *yytext);}
 
