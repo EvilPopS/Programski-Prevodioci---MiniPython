@@ -31,7 +31,7 @@ enum kinds { NO_KIND = 0x1, REG = 0x2, LIT = 0x4, FUN = 0x8, VAR = 0x10, PAR = 0
 
 //konstante arithmetickih operatora
 enum arops { ADD, SUB, MUL, DIV};
-static char *ar_instructions[] = {"ADDU", "SUBU", "MULU", "DIVU"};
+static char *ar_instructions[] = {"ADDS", "SUBS", "MULS", "DIVS"};
                                    
 // konstante logickih operatora
 enum lops {AND, OR};

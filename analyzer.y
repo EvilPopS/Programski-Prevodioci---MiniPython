@@ -31,8 +31,9 @@
 	int nonDefParamNum = 0;
 	bool hasReturn = false;
 	int argsNum = 0;
-	
-  
+	int funcCallInd = -1;
+	int varNumsInds[64]; 
+	int var_num_ind = 0;
   
 %}
 
@@ -129,14 +130,13 @@ assign_statement
 	: _ID _ASSIGN num_exp
       {
       	int index = lookup_symbol_all_kinds($1);
-        if(index == NO_INDEX)
-           insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
-        else 
-        	if (get_kind(index) == FUN)
-        		insert_symbol($1, VAR, $3, NO_ATR, NO_ATR, scope);
-
-		// Deo za generisanje koda
-        
+        if(index == NO_INDEX || get_kind(index) == FUN) {
+			index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
+   			code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
+		}
+		else 
+			set_type(index, get_type($3));
+		gen_mov($3, index);
       }
 	; 
 
@@ -145,9 +145,12 @@ return_statement
 		{
 			if (currFuncInd < 0)
 				err("'return' must be inside a function definition!");
+			
 			int funcInd = funcInds[currFuncInd];
 			if(hasReturn && get_type(funcInd) != NONE)
-				set_type(funcInd, UNKNOWN);			
+				set_type(funcInd, UNKNOWN);
+
+        	code("\n\t\tJMP \t@%s_exit", get_name(funcInds[currFuncInd]));	
 		}
 	| _RETURN num_exp
 		{
@@ -159,24 +162,30 @@ return_statement
 				set_type(funcInd, UNKNOWN);
 			else if(!hasReturn)
 				set_type(funcInd, $2);
+				
+	        gen_mov($2, FUN_REG);
+	        code("\n\t\tJMP \t@%s_exit", get_name(funcInds[currFuncInd]));	
+
 		}
 	;
 
 function_call
 	: _ID _LPAREN arguments _RPAREN
       {
-        int funcInd = lookup_symbol_all_kinds($1);
-        if (funcInd == NO_INDEX || get_kind(funcInd) != FUN)
+        funcCallInd = lookup_symbol_all_kinds($1);
+        if (funcCallInd == NO_INDEX || get_kind(funcCallInd) != FUN)
            err("There is no defined function of name %s", $1);
           
-        int nonDefParams = get_atr1(funcInd);
-        int defParams = get_atr2(funcInd);
+        int nonDefParams = get_atr1(funcCallInd);
+        int defParams = get_atr2(funcCallInd);
         if (argsNum > nonDefParams+defParams)
         	err("Function given more arguments than the definition has parameters!");
         else if (argsNum < nonDefParams)
         	err("Function given less arguments than the definition has non default parameters!");
 
-      	$$ = get_type(funcInd);
+        code("\n\t\t\tCALL\t%s", get_name(funcCallInd));
+
+      	$$ = get_type(funcCallInd);
       }
 	;
 	
@@ -187,7 +196,17 @@ arguments
 	
 args
 	: num_exp
+		{
+			free_if_reg($1);
+			code("\n\t\t\tPUSH\t");
+			gen_sym_name($1);
+		}
 	| _COMMA num_exp
+		{
+			free_if_reg($2);
+			code("\n\t\t\tPUSH\t");
+			gen_sym_name($2);	
+		}
 	;
 
 function_def
@@ -196,6 +215,11 @@ function_def
 		    currFuncInd++;
 			funcInds[currFuncInd] = insert_symbol($2, FUN, NONE, NO_ATR, NO_ATR, scope);
 	  		scope++;
+      	
+		    code("\n%s:", $2);
+		    code("\n\t\tPUSH\t%%14");
+		    code("\n\t\tMOV \t%%15,%%14");
+		
 		}
 	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
 		{
@@ -207,17 +231,24 @@ function_def
 	  body 
 	  	{
 		    clear_symbols(funcInds[currFuncInd] + 1);
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 		    currFuncInd--;
 		    scope--;
 		    hasReturn = false;
-	  	}
+	  	
+	  	    code("\n@%s_exit:", $2);
+		    code("\n\t\tMOV \t%%14,%%15");
+		    code("\n\t\tPOP \t%%14");
+		    code("\n\t\tRET");
+		}
 	;
 
 parameters 
 	: /* no params */
 	| _ID  						
 		{ 
-			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+			insert_symbol($1, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
 			nonDefParamNum++; 
 		}
 	| param_with_default_val
@@ -226,7 +257,7 @@ parameters
 			if (valuedParamDef)
 				err("Parameters without default values cannot be defined after parameter with set default value.");
 
-			insert_symbol($3, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+			insert_symbol($3, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
 			nonDefParamNum++; 
 		}
 	| parameters _COMMA param_with_default_val
@@ -235,7 +266,7 @@ parameters
 param_with_default_val
 	: _ID _ASSIGN num_exp
 		{
-			insert_symbol($1, PAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+			insert_symbol($1, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
 			valuedParamDef = true;
 			defParamNum++;
 		}
@@ -253,7 +284,9 @@ if_part
 		}
 	 body
 		{
-			clear_symbols($<i>5);	
+			clear_symbols($<i>5);
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 		}
 	;
@@ -268,6 +301,8 @@ elif_part
 	 body
 		{
 			clear_symbols($<i>6);	
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 		}
 
@@ -287,6 +322,8 @@ while_part
 	  body
 		{
 			clear_symbols($<i>5);	
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 			loopCounter--;
 		}
@@ -306,6 +343,8 @@ try_part
 	  body
 		{
 			clear_symbols($<i>4);	
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 			loopCounter--;
 		} 
@@ -317,10 +356,10 @@ except_part
 	  	{
   	      	int index = lookup_symbol_all_kinds($3);
 		    if(index == NO_INDEX)
-		       insert_symbol($3, VAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+		       insert_symbol($3, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
 		    else 
 		    	if (get_kind(index) == FUN)
-		    		insert_symbol($3, VAR, UNKNOWN, NO_ATR, NO_ATR, scope);
+		    		insert_symbol($3, VAR, UNKNOWN, +varNumsInds[var_num_ind], NO_ATR, scope);
 	  	}
 	  except_finally_body
 	| except_part _EXCEPT except_finally_body
@@ -336,6 +375,8 @@ except_finally_body
 	  body
 		{
 			clear_symbols($<i>3);	
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 			loopCounter--;
 		}
@@ -356,12 +397,19 @@ else_part
 	 body
 		{
 			clear_symbols($<i>4);	
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
 			scope--;
 		}
 	;
 
 body
-	: _INDENT statement_list _DEDENT
+	: _INDENT 
+		{
+			var_num_ind++;
+			code("\n@%s_body:", get_name(funcInds[currFuncInd]));
+		}
+	  statement_list _DEDENT
 	;
 		
 
@@ -395,9 +443,9 @@ num_exp
 			// Code gen part
 		    code("\n\t\t%s\t", ar_instructions[$2]);
 		    gen_sym_name($1);
-		    code(",");
+		    code(", ");
 		    gen_sym_name($3);
-		    code(",");
+		    code(", ");
 		    free_if_reg($3);
 		    free_if_reg($1);
 		    $$ = take_reg();
@@ -408,7 +456,8 @@ num_exp
 		{
 			int lt = get_type($1);
 			int rt = get_type($3);
-
+			int newType = UNKNOWN;
+			
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
 					err("Invalid operator for operands of type 'None'!");
@@ -417,13 +466,23 @@ num_exp
 				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL)) {
 					if ($2 == DIV)
 						err("Invalid operator for operands of type 'string' and 'number'/'boolean'!");
-					$$ = STRING;
+					newType = STRING;
 				}
 				else
-					$$ = NUM_BOOL;
+					newType = NUM_BOOL;
 			}
-			else 
-				$$ = UNKNOWN;
+			
+			// Code gen part
+		    code("\n\t\t%s\t", ar_instructions[$2]);
+		    gen_sym_name($1);
+		    code(", ");
+		    gen_sym_name($3);
+		    code(", ");
+		    free_if_reg($3);
+		    free_if_reg($1);
+		    $$ = take_reg();
+		    gen_sym_name($$);
+		    set_type($$, newType);
 		}	
 	| num_exp _LOP num_exp
 		{
@@ -460,7 +519,7 @@ exp
 			int idInd = lookup_symbol_var_par($1);
 			if (idInd == NO_INDEX)
 				err("Variable '%s' does not exist!", $1);
-			$$ = get_type(idInd); 
+			$$ = idInd; 
 		}
 	| function_call		{ $$ = $1; }
 	| _LPAREN num_exp _RPAREN	{ $$ = $2; }
