@@ -14,7 +14,8 @@
 	unsigned scope = 0;
 	
 	int out_lin = 0;
-	int lab_num = -1;
+	int lab_num = 0;
+	int next_lab_num= 0;
   	FILE *output;
   
 	char char_buffer[CHAR_BUFFER_LENGTH];
@@ -34,6 +35,8 @@
 	int funcCallInd = -1;
 	int varNumsInds[64]; 
 	int var_num_ind = 0;
+	int currRelOp = -1;
+	int cmpCounter = 0;
   
 %}
 
@@ -98,7 +101,7 @@ statement_list
 	;
 
 statement
-	: simple_statement _NEW_LINE
+	: simple_statement _NEW_LINE {code("\n");}
 	| compound_statement
 	;
 
@@ -128,16 +131,16 @@ compound_statement
 	
 assign_statement
 	: _ID _ASSIGN num_exp
-      {
-      	int index = lookup_symbol_all_kinds($1);
-        if(index == NO_INDEX || get_kind(index) == FUN) {
-			index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
-   			code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
+		{
+			int index = lookup_symbol_all_kinds($1);
+			if(index == NO_INDEX || get_kind(index) == FUN) {
+				index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
+				code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
+			}
+			else 
+				set_type(index, get_type($3));
+			gen_mov($3, index);
 		}
-		else 
-			set_type(index, get_type($3));
-		gen_mov($3, index);
-      }
 	; 
 
 return_statement
@@ -219,7 +222,6 @@ function_def
 		    code("\n%s:", $2);
 		    code("\n\t\tPUSH\t%%14");
 		    code("\n\t\tMOV \t%%15,%%14");
-		
 		}
 	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
 		{
@@ -227,12 +229,11 @@ function_def
 			set_atr2(funcInds[currFuncInd], defParamNum);
 	    	nonDefParamNum = 0;
 	    	defParamNum = 0;
+			code("\n@%s_body:", get_name(funcInds[currFuncInd]));
 		}	
 	  body 
 	  	{
 		    clear_symbols(funcInds[currFuncInd] + 1);
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 		    currFuncInd--;
 		    scope--;
 		    hasReturn = false;
@@ -273,21 +274,32 @@ param_with_default_val
 	;
 
 if_statement
-	: if_part elif_part else_part
+	: if_part elif_part else_part 
+		{ 
+			code("\n@exit_if%d:", lab_num++);
+			next_lab_num == 0;
+		}
 	;
 
 if_part
-	: _IF num_exp _COLON _NEW_LINE
+	: _IF 
+		{
+			code("\n@if%d:", lab_num);		
+		}
+	  num_exp _COLON _NEW_LINE
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
+			
+			free_if_reg($3);
+	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
 		}
 	 body
 		{
-			clear_symbols($<i>5);
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
+			clear_symbols($<i>6);
 			scope--;
+
+			code("\n@next%d_%d:", lab_num, next_lab_num++);
 		}
 	;
 	
@@ -297,13 +309,16 @@ elif_part
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
+			
+			free_if_reg($3);
+	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
 		}
 	 body
 		{
 			clear_symbols($<i>6);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
+			
+			code("\n@next%d_%d:", lab_num, next_lab_num++);
 		}
 
 	;
@@ -322,8 +337,6 @@ while_part
 	  body
 		{
 			clear_symbols($<i>5);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 			loopCounter--;
 		}
@@ -343,8 +356,6 @@ try_part
 	  body
 		{
 			clear_symbols($<i>4);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 			loopCounter--;
 		} 
@@ -375,8 +386,6 @@ except_finally_body
 	  body
 		{
 			clear_symbols($<i>3);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 			loopCounter--;
 		}
@@ -393,28 +402,29 @@ else_part
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
+			
+			code("\n@next%d_%d:", lab_num, next_lab_num++);
 		}
 	 body
 		{
 			clear_symbols($<i>4);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 		}
 	;
 
 body
 	: _INDENT 
-		{
-			var_num_ind++;
-			code("\n@%s_body:", get_name(funcInds[currFuncInd]));
-		}
-	  statement_list _DEDENT
+		{ var_num_ind++; }
+	  statement_list _DEDENT 
+	  	{
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
+	  	}
 	;
 		
 
 num_exp
-	: exp       	{ $$ = $1; }
+	: exp	{ $$ = $1; }
 	| _NOT num_exp  
 		{ 
 			set_type($2, NUM_BOOL);
@@ -498,17 +508,35 @@ num_exp
 		{
 			int lt = get_type($1);
 			int rt = get_type($3);
-
+			int newType = UNKNOWN;
+			
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
 					err("Invalid operator for operands of type 'None'!");
 				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL))
 					err("Invalid operator for operands of type 'number'/'boolean' and 'string'!");
 				else
-					$$ = NUM_BOOL;
+					newType = NUM_BOOL;
 			}
-			else 
-				$$ = UNKNOWN;
+				
+			currRelOp = $2;
+		    $$ = take_reg();
+		    set_type($$, newType);
+			
+			gen_cmp($1, $3);
+            code("\n\t\t%s\t@true%d", jumps[currRelOp], cmpCounter);
+            code("\n@false%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$0, ");
+		    gen_sym_name($$);
+
+            code("\n\t\tJMP \t@cmp_end%d", cmpCounter);
+            code("\n@true%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$1, ");
+		    gen_sym_name($$);		    
+
+            code("\n@cmp_end%d:", cmpCounter++);
 		}
 	;
 	
