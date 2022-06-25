@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_ANALYZER_TAB_H_INCLUDED
-# define YY_YY_ANALYZER_TAB_H_INCLUDED
+#ifndef YY_YY_HIPSIM_TAB_H_INCLUDED
+# define YY_YY_HIPSIM_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -54,40 +54,38 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    _NEW_LINE = 258,               /* _NEW_LINE  */
-    _INDENT = 259,                 /* _INDENT  */
-    _DEDENT = 260,                 /* _DEDENT  */
-    _AND = 261,                    /* _AND  */
-    _BREAK = 262,                  /* _BREAK  */
-    _CONTINUE = 263,               /* _CONTINUE  */
-    _DEF = 264,                    /* _DEF  */
-    _ELIF = 265,                   /* _ELIF  */
-    _ELSE = 266,                   /* _ELSE  */
-    _EXCEPT = 267,                 /* _EXCEPT  */
-    _FINALLY = 268,                /* _FINALLY  */
-    _FOR = 269,                    /* _FOR  */
-    _IF = 270,                     /* _IF  */
-    _IN = 271,                     /* _IN  */
-    _NOT = 272,                    /* _NOT  */
-    _OR = 273,                     /* _OR  */
-    _PASS = 274,                   /* _PASS  */
-    _RETURN = 275,                 /* _RETURN  */
-    _TRY = 276,                    /* _TRY  */
-    _WHILE = 277,                  /* _WHILE  */
-    _COMMA = 278,                  /* _COMMA  */
-    _COLON = 279,                  /* _COLON  */
-    _LPAREN = 280,                 /* _LPAREN  */
-    _RPAREN = 281,                 /* _RPAREN  */
-    _ASSIGN = 282,                 /* _ASSIGN  */
-    _ADD_SUB_OP = 283,             /* _ADD_SUB_OP  */
-    _MUL_DIV_OP = 284,             /* _MUL_DIV_OP  */
-    _LOP = 285,                    /* _LOP  */
-    _RELOP = 286,                  /* _RELOP  */
-    _ID = 287,                     /* _ID  */
-    _NUM_BOOL = 288,               /* _NUM_BOOL  */
-    _STRING = 289,                 /* _STRING  */
-    _NONE = 290,                   /* _NONE  */
-    VAR_ID = 291                   /* VAR_ID  */
+    _WORD = 258,                   /* _WORD  */
+    _PUSH = 259,                   /* _PUSH  */
+    _POP = 260,                    /* _POP  */
+    _CALL = 261,                   /* _CALL  */
+    _RET = 262,                    /* _RET  */
+    _CMP = 263,                    /* _CMP  */
+    _JMP = 264,                    /* _JMP  */
+    _JEQ = 265,                    /* _JEQ  */
+    _JNE = 266,                    /* _JNE  */
+    _JGT = 267,                    /* _JGT  */
+    _JLT = 268,                    /* _JLT  */
+    _JGE = 269,                    /* _JGE  */
+    _JLE = 270,                    /* _JLE  */
+    _JC = 271,                     /* _JC  */
+    _JNC = 272,                    /* _JNC  */
+    _JO = 273,                     /* _JO  */
+    _JNO = 274,                    /* _JNO  */
+    _ADD = 275,                    /* _ADD  */
+    _SUB = 276,                    /* _SUB  */
+    _MUL = 277,                    /* _MUL  */
+    _DIV = 278,                    /* _DIV  */
+    _MOV = 279,                    /* _MOV  */
+    _HALT = 280,                   /* _HALT  */
+    _REGISTER = 281,               /* _REGISTER  */
+    _CONSTANT = 282,               /* _CONSTANT  */
+    _NUMBER = 283,                 /* _NUMBER  */
+    _LABEL_DEF = 284,              /* _LABEL_DEF  */
+    _LABEL = 285,                  /* _LABEL  */
+    _ADDRESS = 286,                /* _ADDRESS  */
+    _COMMA = 287,                  /* _COMMA  */
+    _LPAREN = 288,                 /* _LPAREN  */
+    _RPAREN = 289                  /* _RPAREN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -96,12 +94,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 40 "analyzer.y"
+#line 49 "hipsim.y"
 
-  int i;
-  char *s;
+    long i;
+    char* s;
 
-#line 105 "analyzer.tab.h"
+#line 103 "hipsim.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -116,4 +114,4 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 
-#endif /* !YY_YY_ANALYZER_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HIPSIM_TAB_H_INCLUDED  */
