@@ -6,35 +6,71 @@ main:
 		SUBS	%15,$4,%15
 		MOV 	$2,-4(%14)
 
-		MOV 	$0,%0
-@while_start0:
-		CMPS 	-4(%14),$5
-		JGTS	@true0
+@if_start0:
+		CMPS 	-4(%14),$4
+		JLTS	@true0
 @false0:
-		MOV 	$0, %1
+		MOV 	$0, %0
 		JMP 	@cmp_end0
 @true0:
-		MOV 	$1, %1
+		MOV 	$1, %0
 @cmp_end0:
-		JGTS	@while_body0
-		CMPS 	%0,$0
-		JEQ 	@while_else_start0
-		JMP 	@while_end0
-@while_body0:
-		MOV 	$1,%0
-		ADDS	-4(%14), $1, %2
-		MOV 	%2,-4(%14)
+		JGES	@next0_0
+@if_body0:
+		MOV 	$6,-4(%14)
 
-		JMP 	@while_start0
-@while_else_start0:
-		MOV 	$123,%13
+@if_start1:
+		CMPS 	-4(%14),$6
+		JLTS	@true1
+@false1:
+		MOV 	$0, %0
+		JMP 	@cmp_end1
+@true1:
+		MOV 	$1, %0
+@cmp_end1:
+		JGES	@next1_0
+@if_body1:
+		MOV 	$1,%13
 		JMP 	@main_exit
 
+@next1_0:
+		CMPS 	$0,$0
+		JEQ 	@true2
+@false2:
+		MOV 	$0, %0
+		JMP 	@cmp_end2
+@true2:
+		MOV 	$1, %0
+@cmp_end2:
+		JNE 	@next1_1
+@if_start2:
+		CMPS 	$0,$0
+		JEQ 	@true3
+@false3:
+		MOV 	$0, %0
+		JMP 	@cmp_end3
+@true3:
+		MOV 	$1, %0
+@cmp_end3:
+		JNE 	@next2_0
+@if_body2:
+		MOV 	$1241,%13
+		JMP 	@main_exit
+
+@next2_0:
+@if_end2:
+@next1_1:
+		MOV 	$2,%13
+		JMP 	@main_exit
+
+@next1_2:
+@if_end1:
 @next0_0:
-@while_end0:
-		MOV 	-4(%14),%13
+		MOV 	$3,%13
 		JMP 	@main_exit
 
+@next0_1:
+@if_end0:
 @main_exit:
 		MOV 	%14,%15
 		POP 	%14

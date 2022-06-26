@@ -14,8 +14,14 @@
 	unsigned scope = 0;
 	
 	int out_lin = 0;
-	int lab_num = 0;
-	int next_lab_num= 0;
+	
+	int labNumStates[64];
+	int lab_num_count = -1;
+	int max_lab_num = -1;
+	
+	int nextLabNumStates[64];
+	int next_lab_num_count = -1;
+
   	FILE *output;
   
 	char char_buffer[CHAR_BUFFER_LENGTH];
@@ -26,17 +32,24 @@
 	// Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
 	bool valuedParamDef = false;
 
+	// Za funkcije
 	int funcInds[32]; 
-	int currFuncInd = -1; 
+	int currFuncInd = -1; 	
 	int defParamNum = 0;
 	int nonDefParamNum = 0;
 	bool hasReturn = false;
 	int argsNum = 0;
 	int funcCallInd = -1;
+
+	// Za varijable
 	int varNumsInds[64]; 
 	int var_num_ind = 0;
+
+	// Kod komparacije
 	int currRelOp = -1;
 	int cmpCounter = 0;
+
+	// While petlja
 	bool firstTimeEnterLoop = true; 
 	int regToClear = -1;
   
@@ -109,6 +122,7 @@ statement
 
 simple_statement
 	: assign_statement
+	| multi_assign_statement
 	| return_statement	{ hasReturn = true; }
 	| function_call
 	| _BREAK
@@ -283,15 +297,19 @@ param_with_default_val
 if_statement
 	: if_part elif_part else_part 
 		{ 
-			code("\n@if_end%d:", lab_num++);
-			next_lab_num == 0;
+			code("\n@if_end%d:", labNumStates[lab_num_count]);
+			lab_num_count--;
+			next_lab_num_count--;
 		}
 	;
 
 if_part
 	: _IF 
 		{
-			code("\n@if_start%d:", lab_num);		
+			labNumStates[++lab_num_count] = ++max_lab_num;
+			nextLabNumStates[++next_lab_num_count] = 0;
+			
+			code("\n@if_start%d:", labNumStates[lab_num_count]);		
 		}
 	  num_exp _COLON _NEW_LINE
 		{
@@ -299,15 +317,15 @@ if_part
 			scope++;
 			
 			free_if_reg($3);
-	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
-			code("\n@if_body%d:", lab_num);	
+	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);	
+			code("\n@if_body%d:", labNumStates[lab_num_count]);	
 		}	
 	 body
 		{
 			clear_symbols($<i>6);
 			scope--;
 
-			code("\n@next%d_%d:", lab_num, next_lab_num++);
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]++);
 		}
 	;
 	
@@ -320,14 +338,14 @@ elif_part
 			
 			free_if_reg($3);
 
-		    code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
+		    code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);	
 		}
 	 body
 		{
 			clear_symbols($<i>6);	
 			scope--;
 			
-			code("\n@next%d_%d:", lab_num, next_lab_num++);
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]++);
 		}
 
 	;
@@ -335,7 +353,7 @@ elif_part
 while_statement
 	: while_part 
 	  	{
-			code("\n@while_else_start%d:", lab_num);
+			code("\n@while_else_start%d:", labNumStates[lab_num_count]);
 			if (regToClear != -1) {
 				free_if_reg(regToClear);
 				regToClear = -1;
@@ -343,21 +361,27 @@ while_statement
 	  	}
 	  else_part 
 		{ 
-			code("\n@while_end%d:", lab_num++); 
+			code("\n@while_end%d:", labNumStates[lab_num_count]); 
 			clear_symbols($1);	
 			scope--;
 			loopCounter--;
+			
+			lab_num_count--;
+			next_lab_num_count--;
 		}
 	;
 
 while_part
 	: _WHILE 
 		{
+			labNumStates[++lab_num_count] = ++max_lab_num;
+			nextLabNumStates[++next_lab_num_count] = 0;
+			
 			$<i>$ = take_reg();
 		    code("\n\t\tMOV \t$0,");
 		    gen_sym_name($<i>$);
 		    regToClear = $<i>$;
-			code("\n@while_start%d:", lab_num);
+			code("\n@while_start%d:", labNumStates[lab_num_count]);
 		}
 	  num_exp _COLON _NEW_LINE 
 		{
@@ -365,21 +389,21 @@ while_part
 			scope++;
 			loopCounter++;
 		
-	        code("\n\t\t%s\t@while_body%d", jumps[currRelOp], lab_num);	
+	        code("\n\t\t%s\t@while_body%d", jumps[currRelOp], labNumStates[lab_num_count]);	
 
 			code("\n\t\tCMPS \t");
 			gen_sym_name($<i>2);
 			code(",$0");
-            code("\n\t\t%s\t@while_else_start%d", jumps[4], lab_num);
-            code("\n\t\tJMP \t@while_end%d", lab_num);
+            code("\n\t\t%s\t@while_else_start%d", jumps[4], labNumStates[lab_num_count]);
+            code("\n\t\tJMP \t@while_end%d", labNumStates[lab_num_count]);
 
-			code("\n@while_body%d:", lab_num);
+			code("\n@while_body%d:", labNumStates[lab_num_count]);
 		    code("\n\t\tMOV \t$1,");
 		    gen_sym_name($<i>2);
 		}
 	  body 
 	  	{
-	        code("\n\t\tJMP \t@while_start%d", lab_num);
+	        code("\n\t\tJMP \t@while_start%d", labNumStates[lab_num_count]);
 	        $$ = $<i>6;	  	
 	  	}
 	;
@@ -449,7 +473,7 @@ else_part
 		{
 			clear_symbols($<i>4);	
 			scope--;
-			code("\n@next%d_%d:", lab_num, next_lab_num++);
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);
 		}
 	;
 
