@@ -188,7 +188,12 @@ function_call
 
         code("\n\t\t\tCALL\t%s", get_name(funcCallInd));
 
-      	$$ = get_type(funcCallInd);
+		int numOfArgs = defParams + nonDefParams;
+        if(numOfArgs > 0)
+          code("\n\t\t\tADDS\t%%15,$%d,%%15", numOfArgs * 4);
+          
+        set_type(FUN_REG, get_type(funcCallInd));
+        $$ = FUN_REG;
       }
 	;
 	

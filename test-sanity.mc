@@ -1,7 +1,8 @@
+def abc(a, b, c):
+	return a + b + c
+
+
 def main():
-	if not 0 < 2:
-		return 123
-	else:
-		return 9
+	return abc(2, 0, 3)
 
 	
