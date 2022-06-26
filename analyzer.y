@@ -52,6 +52,13 @@
 	// While petlja
 	bool firstTimeEnterLoop = true; 
 	int regToClear = -1;
+	
+	// Za multi assign
+	int mAssignVarsCounter = 0;
+	int mAssignValuesCounter = 0;
+	int mAssignCurrVal = 0;
+	int mAssignVarInds[64];
+	
   
 %}
 
@@ -111,12 +118,12 @@ file
 	;
 
 statement_list
-	: statement 
-	| statement_list statement 
+	: statement {code("\n");}
+	| statement_list statement {code("\n");}
 	;
 
 statement
-	: simple_statement _NEW_LINE {code("\n");}
+	: simple_statement _NEW_LINE
 	| compound_statement
 	;
 
@@ -158,6 +165,64 @@ assign_statement
 			gen_mov($3, index);
 		}
 	; 
+
+multi_assign_statement
+	: multi_assign_vars 
+		{
+			code("\n\t\tSUBS\t%%15,$%d,%%15", 4*mAssignVarsCounter);
+		}
+	  multi_assign_values 
+		{
+			if (mAssignVarsCounter != mAssignValuesCounter)
+				err("You must assign equal number of values to number of identifiers in multi assign statement!");
+			mAssignVarsCounter = 0;
+			mAssignValuesCounter = 0;
+		}
+	;
+
+multi_assign_vars
+	: _ID _COMMA _ID 
+		{ 
+			int index = lookup_symbol_all_kinds($1);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($1, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;
+
+			index = lookup_symbol_all_kinds($3);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($3, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;
+		}
+	| multi_assign_vars _COMMA _ID 
+		{ 
+			int index = lookup_symbol_all_kinds($3);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($3, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;		
+		}
+	;
+	
+multi_assign_values
+	: _ASSIGN num_exp _COMMA num_exp 
+		{ 	
+			int index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($2));
+			gen_mov($2, index);
+
+			index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($4));
+			gen_mov($4, index);
+		}
+	| multi_assign_values _COMMA num_exp 
+		{
+			int index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($3));
+			gen_mov($3, index);
+		}
+	;
 
 return_statement
 	: _RETURN
