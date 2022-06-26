@@ -96,7 +96,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 43 "analyzer.y"
+#line 45 "analyzer.y"
 
   int i;
   char *s;

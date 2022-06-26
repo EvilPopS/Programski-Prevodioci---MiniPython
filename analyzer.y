@@ -37,6 +37,8 @@
 	int var_num_ind = 0;
 	int currRelOp = -1;
 	int cmpCounter = 0;
+	bool firstTimeEnterLoop = true; 
+	int regToClear = -1;
   
 %}
 
@@ -72,7 +74,7 @@
 %token <s> _NUM_BOOL _STRING _NONE
 
 
-%type <i> num_exp exp function_call literal
+%type <i> num_exp exp function_call literal while_part
 
 
 %define parse.error verbose
@@ -186,11 +188,11 @@ function_call
         else if (argsNum < nonDefParams)
         	err("Function given less arguments than the definition has non default parameters!");
 
-        code("\n\t\t\tCALL\t%s", get_name(funcCallInd));
+        code("\n\t\tCALL\t%s", get_name(funcCallInd));
 
 		int numOfArgs = defParams + nonDefParams;
         if(numOfArgs > 0)
-          code("\n\t\t\tADDS\t%%15,$%d,%%15", numOfArgs * 4);
+          code("\n\t\tADDS\t%%15,$%d,%%15", numOfArgs * 4);
           
         set_type(FUN_REG, get_type(funcCallInd));
         $$ = FUN_REG;
@@ -206,13 +208,13 @@ args
 	: num_exp
 		{
 			free_if_reg($1);
-			code("\n\t\t\tPUSH\t");
+			code("\n\t\tPUSH\t");
 			gen_sym_name($1);
 		}
 	| _COMMA num_exp
 		{
 			free_if_reg($2);
-			code("\n\t\t\tPUSH\t");
+			code("\n\t\tPUSH\t");
 			gen_sym_name($2);	
 		}
 	;
@@ -297,9 +299,7 @@ if_part
 			scope++;
 			
 			free_if_reg($3);
-		
 	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
-
 			code("\n@if_body%d:", lab_num);	
 		}	
 	 body
@@ -333,22 +333,55 @@ elif_part
 	;
 
 while_statement
-	: while_part else_part
+	: while_part 
+	  	{
+			code("\n@while_else_start%d:", lab_num);
+			if (regToClear != -1) {
+				free_if_reg(regToClear);
+				regToClear = -1;
+			}
+	  	}
+	  else_part 
+		{ 
+			code("\n@while_end%d:", lab_num++); 
+			clear_symbols($1);	
+			scope--;
+			loopCounter--;
+		}
 	;
 
 while_part
-	: _WHILE num_exp _COLON _NEW_LINE 
+	: _WHILE 
+		{
+			$<i>$ = take_reg();
+		    code("\n\t\tMOV \t$0,");
+		    gen_sym_name($<i>$);
+		    regToClear = $<i>$;
+			code("\n@while_start%d:", lab_num);
+		}
+	  num_exp _COLON _NEW_LINE 
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
 			loopCounter++;
+		
+	        code("\n\t\t%s\t@while_body%d", jumps[currRelOp], lab_num);	
+
+			code("\n\t\tCMPS \t");
+			gen_sym_name($<i>2);
+			code(",$0");
+            code("\n\t\t%s\t@while_else_start%d", jumps[4], lab_num);
+            code("\n\t\tJMP \t@while_end%d", lab_num);
+
+			code("\n@while_body%d:", lab_num);
+		    code("\n\t\tMOV \t$1,");
+		    gen_sym_name($<i>2);
 		}
-	  body
-		{
-			clear_symbols($<i>5);	
-			scope--;
-			loopCounter--;
-		}
+	  body 
+	  	{
+	        code("\n\t\tJMP \t@while_start%d", lab_num);
+	        $$ = $<i>6;	  	
+	  	}
 	;
 
 try_except_statement

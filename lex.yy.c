@@ -941,7 +941,7 @@ YY_RULE_SETUP
 case 9:
 YY_RULE_SETUP
 #line 64 "analyzer.l"
-{ return _DEF; }  // jos uvek nije impl
+{ return _DEF; }  
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
@@ -966,7 +966,7 @@ YY_RULE_SETUP
 case 14:
 YY_RULE_SETUP
 #line 69 "analyzer.l"
-{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+{ yylval.s = strdup("0"); return _NUM_BOOL; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
@@ -1011,7 +1011,7 @@ YY_RULE_SETUP
 case 23:
 YY_RULE_SETUP
 #line 78 "analyzer.l"
-{ yylval.i = NUM_BOOL; return _NUM_BOOL; }
+{ yylval.s = strdup("1"); return _NUM_BOOL; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP

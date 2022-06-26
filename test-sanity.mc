@@ -1,8 +1,10 @@
-def abc(a, b, c):
-	return a + b + c
-
 
 def main():
-	return abc(2, 0, 3)
+	a = 2
+	while a > 5:
+		a = a + 1
+	else:
+		return 123
+	return a
 
 	
