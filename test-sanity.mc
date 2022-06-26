@@ -1,6 +1,7 @@
+
 def main():
-	a = 2
-	b = 3
-	c = a + b
-	d = c + 1
-	return d
+	a, b = 1, 1 +3
+	a, c, d = 1, 1, 1
+	return a + b + c + d
+
+	

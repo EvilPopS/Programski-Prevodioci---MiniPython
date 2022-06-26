@@ -14,7 +14,14 @@
 	unsigned scope = 0;
 	
 	int out_lin = 0;
-	int lab_num = -1;
+	
+	int labNumStates[64];
+	int lab_num_count = -1;
+	int max_lab_num = -1;
+	
+	int nextLabNumStates[64];
+	int next_lab_num_count = -1;
+
   	FILE *output;
   
 	char char_buffer[CHAR_BUFFER_LENGTH];
@@ -25,15 +32,33 @@
 	// Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
 	bool valuedParamDef = false;
 
+	// Za funkcije
 	int funcInds[32]; 
-	int currFuncInd = -1; 
+	int currFuncInd = -1; 	
 	int defParamNum = 0;
 	int nonDefParamNum = 0;
 	bool hasReturn = false;
 	int argsNum = 0;
 	int funcCallInd = -1;
+
+	// Za varijable
 	int varNumsInds[64]; 
 	int var_num_ind = 0;
+
+	// Kod komparacije
+	int currRelOp = -1;
+	int cmpCounter = 0;
+
+	// While petlja
+	bool firstTimeEnterLoop = true; 
+	int regToClear = -1;
+	
+	// Za multi assign
+	int mAssignVarsCounter = 0;
+	int mAssignValuesCounter = 0;
+	int mAssignCurrVal = 0;
+	int mAssignVarInds[64];
+	
   
 %}
 
@@ -69,7 +94,7 @@
 %token <s> _NUM_BOOL _STRING _NONE
 
 
-%type <i> num_exp exp function_call literal
+%type <i> num_exp exp function_call literal while_part
 
 
 %define parse.error verbose
@@ -93,8 +118,8 @@ file
 	;
 
 statement_list
-	: statement 
-	| statement_list statement 
+	: statement {code("\n");}
+	| statement_list statement {code("\n");}
 	;
 
 statement
@@ -104,6 +129,7 @@ statement
 
 simple_statement
 	: assign_statement
+	| multi_assign_statement
 	| return_statement	{ hasReturn = true; }
 	| function_call
 	| _BREAK
@@ -128,17 +154,75 @@ compound_statement
 	
 assign_statement
 	: _ID _ASSIGN num_exp
-      {
-      	int index = lookup_symbol_all_kinds($1);
-        if(index == NO_INDEX || get_kind(index) == FUN) {
-			index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
-   			code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
+		{
+			int index = lookup_symbol_all_kinds($1);
+			if(index == NO_INDEX || get_kind(index) == FUN) {
+				index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
+				code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
+			}
+			else 
+				set_type(index, get_type($3));
+			gen_mov($3, index);
 		}
-		else 
-			set_type(index, get_type($3));
-		gen_mov($3, index);
-      }
 	; 
+
+multi_assign_statement
+	: multi_assign_vars 
+		{
+			code("\n\t\tSUBS\t%%15,$%d,%%15", 4*mAssignVarsCounter);
+		}
+	  multi_assign_values 
+		{
+			if (mAssignVarsCounter != mAssignValuesCounter)
+				err("You must assign equal number of values to number of identifiers in multi assign statement!");
+			mAssignVarsCounter = 0;
+			mAssignValuesCounter = 0;
+		}
+	;
+
+multi_assign_vars
+	: _ID _COMMA _ID 
+		{ 
+			int index = lookup_symbol_all_kinds($1);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($1, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;
+
+			index = lookup_symbol_all_kinds($3);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($3, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;
+		}
+	| multi_assign_vars _COMMA _ID 
+		{ 
+			int index = lookup_symbol_all_kinds($3);
+			if(index == NO_INDEX || get_kind(index) == FUN)
+				mAssignVarInds[mAssignVarsCounter++] = insert_symbol($3, VAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			else
+				mAssignVarInds[mAssignVarsCounter++] = index;		
+		}
+	;
+	
+multi_assign_values
+	: _ASSIGN num_exp _COMMA num_exp 
+		{ 	
+			int index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($2));
+			gen_mov($2, index);
+
+			index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($4));
+			gen_mov($4, index);
+		}
+	| multi_assign_values _COMMA num_exp 
+		{
+			int index = mAssignVarInds[mAssignValuesCounter++];
+			set_type(index, get_type($3));
+			gen_mov($3, index);
+		}
+	;
 
 return_statement
 	: _RETURN
@@ -183,9 +267,14 @@ function_call
         else if (argsNum < nonDefParams)
         	err("Function given less arguments than the definition has non default parameters!");
 
-        code("\n\t\t\tCALL\t%s", get_name(funcCallInd));
+        code("\n\t\tCALL\t%s", get_name(funcCallInd));
 
-      	$$ = get_type(funcCallInd);
+		int numOfArgs = defParams + nonDefParams;
+        if(numOfArgs > 0)
+          code("\n\t\tADDS\t%%15,$%d,%%15", numOfArgs * 4);
+          
+        set_type(FUN_REG, get_type(funcCallInd));
+        $$ = FUN_REG;
       }
 	;
 	
@@ -198,13 +287,13 @@ args
 	: num_exp
 		{
 			free_if_reg($1);
-			code("\n\t\t\tPUSH\t");
+			code("\n\t\tPUSH\t");
 			gen_sym_name($1);
 		}
 	| _COMMA num_exp
 		{
 			free_if_reg($2);
-			code("\n\t\t\tPUSH\t");
+			code("\n\t\tPUSH\t");
 			gen_sym_name($2);	
 		}
 	;
@@ -219,7 +308,6 @@ function_def
 		    code("\n%s:", $2);
 		    code("\n\t\tPUSH\t%%14");
 		    code("\n\t\tMOV \t%%15,%%14");
-		
 		}
 	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
 		{
@@ -227,12 +315,11 @@ function_def
 			set_atr2(funcInds[currFuncInd], defParamNum);
 	    	nonDefParamNum = 0;
 	    	defParamNum = 0;
+			code("\n@%s_body:", get_name(funcInds[currFuncInd]));
 		}	
 	  body 
 	  	{
 		    clear_symbols(funcInds[currFuncInd] + 1);
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 		    currFuncInd--;
 		    scope--;
 		    hasReturn = false;
@@ -273,21 +360,37 @@ param_with_default_val
 	;
 
 if_statement
-	: if_part elif_part else_part
+	: if_part elif_part else_part 
+		{ 
+			code("\n@if_end%d:", labNumStates[lab_num_count]);
+			lab_num_count--;
+			next_lab_num_count--;
+		}
 	;
 
 if_part
-	: _IF num_exp _COLON _NEW_LINE
+	: _IF 
+		{
+			labNumStates[++lab_num_count] = ++max_lab_num;
+			nextLabNumStates[++next_lab_num_count] = 0;
+			
+			code("\n@if_start%d:", labNumStates[lab_num_count]);		
+		}
+	  num_exp _COLON _NEW_LINE
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
-		}
+			
+			free_if_reg($3);
+	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);	
+			code("\n@if_body%d:", labNumStates[lab_num_count]);	
+		}	
 	 body
 		{
-			clear_symbols($<i>5);
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
+			clear_symbols($<i>6);
 			scope--;
+
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]++);
 		}
 	;
 	
@@ -297,36 +400,77 @@ elif_part
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
+			
+			free_if_reg($3);
+
+		    code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);	
 		}
 	 body
 		{
 			clear_symbols($<i>6);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
+			
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]++);
 		}
 
 	;
 
 while_statement
-	: while_part else_part
+	: while_part 
+	  	{
+			code("\n@while_else_start%d:", labNumStates[lab_num_count]);
+			if (regToClear != -1) {
+				free_if_reg(regToClear);
+				regToClear = -1;
+			}
+	  	}
+	  else_part 
+		{ 
+			code("\n@while_end%d:", labNumStates[lab_num_count]); 
+			clear_symbols($1);	
+			scope--;
+			loopCounter--;
+			
+			lab_num_count--;
+			next_lab_num_count--;
+		}
 	;
 
 while_part
-	: _WHILE num_exp _COLON _NEW_LINE 
+	: _WHILE 
+		{
+			labNumStates[++lab_num_count] = ++max_lab_num;
+			nextLabNumStates[++next_lab_num_count] = 0;
+			
+			$<i>$ = take_reg();
+		    code("\n\t\tMOV \t$0,");
+		    gen_sym_name($<i>$);
+		    regToClear = $<i>$;
+			code("\n@while_start%d:", labNumStates[lab_num_count]);
+		}
+	  num_exp _COLON _NEW_LINE 
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
 			loopCounter++;
+		
+	        code("\n\t\t%s\t@while_body%d", jumps[currRelOp], labNumStates[lab_num_count]);	
+
+			code("\n\t\tCMPS \t");
+			gen_sym_name($<i>2);
+			code(",$0");
+            code("\n\t\t%s\t@while_else_start%d", jumps[4], labNumStates[lab_num_count]);
+            code("\n\t\tJMP \t@while_end%d", labNumStates[lab_num_count]);
+
+			code("\n@while_body%d:", labNumStates[lab_num_count]);
+		    code("\n\t\tMOV \t$1,");
+		    gen_sym_name($<i>2);
 		}
-	  body
-		{
-			clear_symbols($<i>5);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
-			scope--;
-			loopCounter--;
-		}
+	  body 
+	  	{
+	        code("\n\t\tJMP \t@while_start%d", labNumStates[lab_num_count]);
+	        $$ = $<i>6;	  	
+	  	}
 	;
 
 try_except_statement
@@ -343,8 +487,6 @@ try_part
 	  body
 		{
 			clear_symbols($<i>4);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 			loopCounter--;
 		} 
@@ -375,8 +517,6 @@ except_finally_body
 	  body
 		{
 			clear_symbols($<i>3);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
 			loopCounter--;
 		}
@@ -392,33 +532,54 @@ else_part
 	|_ELSE _COLON _NEW_LINE 
 		{
 			$<i>$ = get_last_element()+1; 
-			scope++;
+			scope++;			
 		}
 	 body
 		{
 			clear_symbols($<i>4);	
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
 			scope--;
+			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]);
 		}
 	;
 
 body
 	: _INDENT 
-		{
-			var_num_ind++;
-			code("\n@%s_body:", get_name(funcInds[currFuncInd]));
+		{ 
+			var_num_ind++; 
 		}
-	  statement_list _DEDENT
+	  statement_list _DEDENT 
+	  	{
+            varNumsInds[var_num_ind] = 0;
+			var_num_ind--;
+	  	}
 	;
 		
 
 num_exp
-	: exp       	{ $$ = $1; }
+	: exp	{ $$ = $1; }
 	| _NOT num_exp  
 		{ 
-			set_type($2, NUM_BOOL);
-			$$ = $2; 
+			currRelOp = 4;
+			$$ = take_reg();
+			set_type($$, NUM_BOOL);
+			
+			code("\n\t\tCMPS \t");
+			gen_sym_name($2);
+			code(",$0");
+			
+            code("\n\t\t%s\t@true%d", jumps[4], cmpCounter);
+            code("\n@false%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$0, ");
+		    gen_sym_name($$);
+
+            code("\n\t\tJMP \t@cmp_end%d", cmpCounter);
+            code("\n@true%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$1, ");
+		    gen_sym_name($$);		    
+
+            code("\n@cmp_end%d:", cmpCounter++);
 		}
 	| num_exp _ADD_SUB_OP num_exp
 		{
@@ -498,17 +659,35 @@ num_exp
 		{
 			int lt = get_type($1);
 			int rt = get_type($3);
-
+			int newType = UNKNOWN;
+			
 			if (lt != UNKNOWN && rt != UNKNOWN) {
 				if (lt == NONE || rt == NONE)
 					err("Invalid operator for operands of type 'None'!");
 				else if ((lt == NUM_BOOL && rt == STRING) || (lt == STRING && rt == NUM_BOOL))
 					err("Invalid operator for operands of type 'number'/'boolean' and 'string'!");
 				else
-					$$ = NUM_BOOL;
+					newType = NUM_BOOL;
 			}
-			else 
-				$$ = UNKNOWN;
+				
+			currRelOp = $2;
+		    $$ = take_reg();
+		    set_type($$, newType);
+			
+			gen_cmp($1, $3);
+            code("\n\t\t%s\t@true%d", jumps[currRelOp], cmpCounter);
+            code("\n@false%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$0, ");
+		    gen_sym_name($$);
+
+            code("\n\t\tJMP \t@cmp_end%d", cmpCounter);
+            code("\n@true%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$1, ");
+		    gen_sym_name($$);		    
+
+            code("\n@cmp_end%d:", cmpCounter++);
 		}
 	;
 	
