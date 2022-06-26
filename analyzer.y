@@ -276,7 +276,7 @@ param_with_default_val
 if_statement
 	: if_part elif_part else_part 
 		{ 
-			code("\n@exit_if%d:", lab_num++);
+			code("\n@if_end%d:", lab_num++);
 			next_lab_num == 0;
 		}
 	;
@@ -284,7 +284,7 @@ if_statement
 if_part
 	: _IF 
 		{
-			code("\n@if%d:", lab_num);		
+			code("\n@if_start%d:", lab_num);		
 		}
 	  num_exp _COLON _NEW_LINE
 		{
@@ -292,8 +292,11 @@ if_part
 			scope++;
 			
 			free_if_reg($3);
+		
 	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
-		}
+
+			code("\n@if_body%d:", lab_num);	
+		}	
 	 body
 		{
 			clear_symbols($<i>6);
@@ -311,7 +314,8 @@ elif_part
 			scope++;
 			
 			free_if_reg($3);
-	        code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
+
+		    code("\n\t\t%s\t@next%d_%d", opp_jumps[currRelOp], lab_num, next_lab_num);	
 		}
 	 body
 		{
@@ -401,20 +405,21 @@ else_part
 	|_ELSE _COLON _NEW_LINE 
 		{
 			$<i>$ = get_last_element()+1; 
-			scope++;
-			
-			code("\n@next%d_%d:", lab_num, next_lab_num++);
+			scope++;			
 		}
 	 body
 		{
 			clear_symbols($<i>4);	
 			scope--;
+			code("\n@next%d_%d:", lab_num, next_lab_num++);
 		}
 	;
 
 body
 	: _INDENT 
-		{ var_num_ind++; }
+		{ 
+			var_num_ind++; 
+		}
 	  statement_list _DEDENT 
 	  	{
             varNumsInds[var_num_ind] = 0;
@@ -427,8 +432,27 @@ num_exp
 	: exp	{ $$ = $1; }
 	| _NOT num_exp  
 		{ 
-			set_type($2, NUM_BOOL);
-			$$ = $2; 
+			currRelOp = 4;
+			$$ = take_reg();
+			set_type($$, NUM_BOOL);
+			
+			code("\n\t\tCMPS \t");
+			gen_sym_name($2);
+			code(",$0");
+			
+            code("\n\t\t%s\t@true%d", jumps[4], cmpCounter);
+            code("\n@false%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$0, ");
+		    gen_sym_name($$);
+
+            code("\n\t\tJMP \t@cmp_end%d", cmpCounter);
+            code("\n@true%d:", cmpCounter);
+
+		    code("\n\t\tMOV \t$1, ");
+		    gen_sym_name($$);		    
+
+            code("\n@cmp_end%d:", cmpCounter++);
 		}
 	| num_exp _ADD_SUB_OP num_exp
 		{

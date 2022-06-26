@@ -40,8 +40,8 @@ enum lops {AND, OR};
 enum relops { LS, GR, LSEQ, GREQ, EQ, NEQ, IS };
 
 // Jumpovi
-static char* jumps[]={"JLTS", "JGTS", "JLES", "JGES", "JEQ ", "JNE ", "JEQ"};
+static char* jumps[]={"JLTS", "JGTS", "JLES", "JGES", "JEQ ", "JNE ", "JEQ "};
 
-static char* opp_jumps[]={"JGES", "JLES", "JGTS", "JLTS", "JNE ", "JEQ "};
+static char* opp_jumps[]={"JGES", "JLES", "JGTS", "JLTS", "JNE ", "JEQ ", "JNE "};
 #endif
 
