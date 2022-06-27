@@ -16,7 +16,7 @@
 %}
 
 %%
-	{;
+	{		
 		if (retIndent > 0) {
 			retIndent--;
 			return _INDENT;
@@ -28,6 +28,7 @@
 	}
 
 " "+    				{ /* skip */ }
+\#.*					{ /* skip */ }
 
 [\n][ \n\t]*[\n]		{ 
 							resetIndentation();	  	  	  
@@ -98,9 +99,9 @@
 "!="    { yylval.i = NEQ;  return _RELOP; }
 
 [a-zA-Z_][a-zA-Z0-9_]* 			{ yylval.s = strdup(yytext); return _ID; }
-[0-9]{1,10}     			{ yylval.s = strdup(yytext); return _NUM_BOOL; }
-[0-9]{0,9}"."[0-9]{1,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
-[0-9]{1,9}"."[0-9]{0,9}     { yylval.s = strdup(yytext); return _NUM_BOOL; }
+[0-9]{1,10}     				{ yylval.s = strdup(yytext); return _NUM_BOOL; }
+[0-9]{0,9}"."[0-9]{1,9}     	{ yylval.s = strdup(yytext); return _NUM_BOOL; }
+[0-9]{1,9}"."[0-9]{0,9}     	{ yylval.s = strdup(yytext); return _NUM_BOOL; }
 \"[^"\n]*\"     				{ yylval.s = strdup(yytext); return _STRING; }
 \'[^'\n]*\'     				{ yylval.s = strdup(yytext); return _STRING; }
 
@@ -119,13 +120,13 @@ void incOrdDecIndentation() {
 	if (prevIndentLvl < curIndentLvl) {
 		retIndent = curIndentLvl - prevIndentLvl;
 		prevIndentLvl = curIndentLvl;
-		curIndentLvl = 0;
 	} 
 	else if (prevIndentLvl > curIndentLvl) {
 		retDedent = prevIndentLvl - curIndentLvl;
 		prevIndentLvl = curIndentLvl;
-		curIndentLvl = 0;
 	}
+	curIndentLvl = 0;
+
 }
 
 

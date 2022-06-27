@@ -26,8 +26,6 @@
   
 	char char_buffer[CHAR_BUFFER_LENGTH];
 
-	// Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue
-	int loopCounter = 0;
 
 	// Kod definisanja funkcije parametri bez definisane vrednosti ne smeju da se nalaze posle param sa def vrednostima
 	bool valuedParamDef = false;
@@ -42,16 +40,22 @@
 	int funcCallInd = -1;
 
 	// Za varijable
-	int varNumsInds[64]; 
+	int varNumsInds[64] = {0}; 
 	int var_num_ind = 0;
+
+	// Za parametre
+	int paramNumsInds[64] = {0}; 
+	int param_num_ind = 0;
 
 	// Kod komparacije
 	int currRelOp = -1;
 	int cmpCounter = 0;
 
 	// While petlja
-	bool firstTimeEnterLoop = true; 
 	int regToClear = -1;
+	int whileLabNums[64];
+	// Broji u koliko se ugnjezdenih petlja nalazi pa na osnovu toga dozvoljava ( >0 ) odnosno ne dozvoljava ( ==0) 'break' ili 'continue'
+	int loopCounter = -1;
 	
 	// Za multi assign
 	int mAssignVarsCounter = 0;
@@ -114,7 +118,7 @@
 file
 	: /* empty */ 
 	| statement_list
-	| _NEW_LINE statement_list
+	| new_line statement_list
 	;
 
 statement_list
@@ -123,7 +127,7 @@ statement_list
 	;
 
 statement
-	: simple_statement _NEW_LINE
+	: simple_statement new_line
 	| compound_statement
 	;
 
@@ -136,11 +140,15 @@ simple_statement
 		{
 			if (loopCounter == 0)
 				err("'break' must be inside while statement!");
+				
+			code("\n\t\tJMP \t@while_end%d", whileLabNums[loopCounter]);
 		}
 	| _CONTINUE
 		{
 			if (loopCounter == 0)
 				err("'continue' must be inside while statement!");
+				
+			code("\n\t\tJMP \t@while_start%d", whileLabNums[loopCounter]);
 		}
 	| _PASS
 	;
@@ -156,6 +164,7 @@ assign_statement
 	: _ID _ASSIGN num_exp
 		{
 			int index = lookup_symbol_all_kinds($1);
+
 			if(index == NO_INDEX || get_kind(index) == FUN) {
 				index = insert_symbol($1, VAR, get_type($3), ++varNumsInds[var_num_ind], NO_ATR, scope);
 				code("\n\t\tSUBS\t%%15,$%d,%%15", 4);
@@ -262,6 +271,7 @@ function_call
           
         int nonDefParams = get_atr1(funcCallInd);
         int defParams = get_atr2(funcCallInd);
+
         if (argsNum > nonDefParams+defParams)
         	err("Function given more arguments than the definition has parameters!");
         else if (argsNum < nonDefParams)
@@ -269,18 +279,19 @@ function_call
 
         code("\n\t\tCALL\t%s", get_name(funcCallInd));
 
-		int numOfArgs = defParams + nonDefParams;
-        if(numOfArgs > 0)
-          code("\n\t\tADDS\t%%15,$%d,%%15", numOfArgs * 4);
-          
-        set_type(FUN_REG, get_type(funcCallInd));
-        $$ = FUN_REG;
+        if(argsNum > 0)
+          code("\n\t\tADDS\t%%15,$%d,%%15", argsNum * 4);
+         
+        argsNum = 0;
+        set_type(FUN_REG, UNKNOWN);
+        $$ = take_reg();
+        gen_mov(FUN_REG, $$);
       }
 	;
 	
 arguments
 	: /* no arguments */
-	| arguments args { argsNum++; }
+	| arguments args
 	;
 	
 args
@@ -289,18 +300,23 @@ args
 			free_if_reg($1);
 			code("\n\t\tPUSH\t");
 			gen_sym_name($1);
+			argsNum++;
 		}
-	| _COMMA num_exp
+	| args _COMMA num_exp
 		{
-			free_if_reg($2);
 			code("\n\t\tPUSH\t");
-			gen_sym_name($2);	
+			gen_sym_name($3);	
+			free_if_reg($3);
+			argsNum++;
 		}
 	;
 
 function_def
 	: _DEF _ID 
 		{
+			paramNumsInds[param_num_ind+1] = paramNumsInds[param_num_ind];
+			param_num_ind++;
+
 		    currFuncInd++;
 			funcInds[currFuncInd] = insert_symbol($2, FUN, NONE, NO_ATR, NO_ATR, scope);
 	  		scope++;
@@ -309,7 +325,7 @@ function_def
 		    code("\n\t\tPUSH\t%%14");
 		    code("\n\t\tMOV \t%%15,%%14");
 		}
-	  _LPAREN parameters _RPAREN _COLON _NEW_LINE 
+	  _LPAREN parameters _RPAREN _COLON new_line 
 		{
 			set_atr1(funcInds[currFuncInd], nonDefParamNum);
 			set_atr2(funcInds[currFuncInd], defParamNum);
@@ -321,6 +337,7 @@ function_def
 	  	{
 		    clear_symbols(funcInds[currFuncInd] + 1);
 		    currFuncInd--;
+			param_num_ind--;
 		    scope--;
 		    hasReturn = false;
 	  	
@@ -335,7 +352,7 @@ parameters
 	: /* no params */
 	| _ID  						
 		{ 
-			insert_symbol($1, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			insert_symbol($1, PAR, UNKNOWN, ++paramNumsInds[param_num_ind], NO_ATR, scope);
 			nonDefParamNum++; 
 		}
 	| param_with_default_val
@@ -344,7 +361,7 @@ parameters
 			if (valuedParamDef)
 				err("Parameters without default values cannot be defined after parameter with set default value.");
 
-			insert_symbol($3, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			insert_symbol($3, PAR, UNKNOWN, ++paramNumsInds[param_num_ind], NO_ATR, scope);
 			nonDefParamNum++; 
 		}
 	| parameters _COMMA param_with_default_val
@@ -353,7 +370,7 @@ parameters
 param_with_default_val
 	: _ID _ASSIGN num_exp
 		{
-			insert_symbol($1, PAR, UNKNOWN, ++varNumsInds[var_num_ind], NO_ATR, scope);
+			insert_symbol($1, PAR, UNKNOWN, ++paramNumsInds[param_num_ind], NO_ATR, scope);
 			valuedParamDef = true;
 			defParamNum++;
 		}
@@ -376,7 +393,7 @@ if_part
 			
 			code("\n@if_start%d:", labNumStates[lab_num_count]);		
 		}
-	  num_exp _COLON _NEW_LINE
+	  num_exp _COLON new_line
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
@@ -389,14 +406,15 @@ if_part
 		{
 			clear_symbols($<i>6);
 			scope--;
-
+			
+			code("\n\t\tJMP \t@if_end%d", labNumStates[lab_num_count]);	
 			code("\n@next%d_%d:", labNumStates[lab_num_count], nextLabNumStates[next_lab_num_count]++);
 		}
 	;
 	
 elif_part
 	: /* no elif part*/
-	| elif_part _ELIF num_exp _COLON _NEW_LINE
+	| elif_part _ELIF num_exp _COLON new_line
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
@@ -438,21 +456,22 @@ while_statement
 
 while_part
 	: _WHILE 
-		{
+		{			
 			labNumStates[++lab_num_count] = ++max_lab_num;
 			nextLabNumStates[++next_lab_num_count] = 0;
 			
+			whileLabNums[++loopCounter] = labNumStates[lab_num_count];
+
 			$<i>$ = take_reg();
 		    code("\n\t\tMOV \t$0,");
 		    gen_sym_name($<i>$);
 		    regToClear = $<i>$;
 			code("\n@while_start%d:", labNumStates[lab_num_count]);
 		}
-	  num_exp _COLON _NEW_LINE 
+	  num_exp _COLON new_line 
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
-			loopCounter++;
 		
 	        code("\n\t\t%s\t@while_body%d", jumps[currRelOp], labNumStates[lab_num_count]);	
 
@@ -478,7 +497,7 @@ try_except_statement
 	;
 
 try_part
-	: _TRY _COLON _NEW_LINE 
+	: _TRY _COLON new_line 
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
@@ -508,7 +527,7 @@ except_part
 	;
 
 except_finally_body
-	: _COLON _NEW_LINE
+	: _COLON new_line
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;
@@ -529,7 +548,7 @@ finally_or_else_part
 
 else_part
 	: /* no else part*/
-	|_ELSE _COLON _NEW_LINE 
+	|_ELSE _COLON new_line 
 		{
 			$<i>$ = get_last_element()+1; 
 			scope++;			
@@ -544,13 +563,13 @@ else_part
 
 body
 	: _INDENT 
-		{ 
-			var_num_ind++; 
+		{
+			varNumsInds[var_num_ind+1] = varNumsInds[var_num_ind];
+			var_num_ind++;
 		}
 	  statement_list _DEDENT 
 	  	{
-            varNumsInds[var_num_ind] = 0;
-			var_num_ind--;
+            var_num_ind--;
 	  	}
 	;
 		
@@ -673,7 +692,7 @@ num_exp
 			currRelOp = $2;
 		    $$ = take_reg();
 		    set_type($$, newType);
-			
+
 			gen_cmp($1, $3);
             code("\n\t\t%s\t@true%d", jumps[currRelOp], cmpCounter);
             code("\n@false%d:", cmpCounter);
@@ -710,6 +729,10 @@ literal
 	| _NONE		{ $$ = insert_literal($1, NONE, scope); }
 	;
 
+new_line
+	: _NEW_LINE
+	| new_line _NEW_LINE
+	;
 	
 %%
 
