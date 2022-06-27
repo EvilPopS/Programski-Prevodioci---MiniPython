@@ -77,7 +77,7 @@ det: $(SRC)
 	@if [ ! -f $(SRC) ]; then exit 1; fi
 	@echo -e "\n\e[01;36mRunning compiler with test files...\e[00m"
 	@if [ "$$TEST" != "" ]; then all_tests=$$TEST; \
-	else all_tests=test*.mc; fi; \
+	else all_tests=./tests/test*.mc; fi; \
 	for test in $$all_tests; do \
 		if [[ $$test =~ .*synerr.* ]]; then echo -e "\e[01;35m"; ttyp="syn"; \
 		elif [[ $$test =~ .*semerr.* ]]; then echo -e "\e[01;34m"; ttyp="sem"; \
@@ -85,9 +85,9 @@ det: $(SRC)
 		elif [[ $$test =~ .*warn.* ]]; then echo -e "\e[01;33m"; ttyp="war"; \
 		else echo -e "\e[01;36m"; ttyp="ok"; fi; \
 		echo -e "\n\n------------------------\nTesting: $$test"; \
-		grep "//OPIS:" $$test; \
+		grep "#OPIS:" $$test; \
 		echo -e "------------------------\e[00m"; \
-		RETURN=$$(grep "//RETURN:" "$$test"); \
+		RETURN=$$(grep "#RETURN:" "$$test"); \
 		RETURN=$${RETURN#*:}; \
 		RETURN=$$(echo "$$RETURN" | xargs); \
 		./$(SRC) < "$$test"; \
@@ -105,21 +105,21 @@ det: $(SRC)
 		elif [ "$(ASM)" == "true" ] && [ $$out -eq 0 ]; then \
 			outname=$$(basename $$test); \
 			outname=$${outname%.*}; \
-			mv output.asm "$${outname}.asm"; \
-			echo -e "output.asm saved as \e[01;34m$${outname}.asm\n\e[00m"; \
-			if [ -f $${outname}.asm.ok ]; then \
-				diff -w -B "$${outname}.asm" "$${outname}.asm.ok" > /dev/null; \
+			mv output.asm "asm_out/$${outname}.asm"; \
+			echo -e "output.asm saved as \e[01;34masm_out/$${outname}.asm\n\e[00m"; \
+			if [ -f asm_out/$${outname}.asm.ok ]; then \
+				diff -w -B "asm_out/$${outname}.asm" "asm_out/$${outname}.asm.ok" > /dev/null; \
 				if [ $$? -ne 0 ]; then \
 					if [[ $$ttyp == "san" ]]; then \
 						echo -e "\e[01;31m\nASM code generation for original miniC is changed!"; \
 					else \
 						echo -e "\e[01;31m\nASM code differs from expected!"; \
 					fi; \
-					echo -e "Run\e[00m fldiff $${outname}.asm $${outname}.asm.ok"; \
+					echo -e "Run\e[00m fldiff asm_out/$${outname}.asm asm_out/$${outname}.asm.ok"; \
 				fi; \
 			elif [ "$$RETURN" != "" ]; then \
 				echo -e "\e[01;34mRunning simulator...\e[00m"; \
-				RETVAL=$$(./hipsim -r -s 500 < "$${outname}.asm"); \
+				RETVAL=$$(./hipsim -r -s 500 < "asm_out/$${outname}.asm"); \
 				CODE=$$?; \
 				if [ $$CODE -ne 0 ]; then \
 					if [ $$CODE -eq 4 ]; then \
@@ -146,7 +146,7 @@ test: $(SRC)
 	@if [ ! -f $(SRC) ]; then exit 1; fi
 	@echo -e "\n\e[01;36mRunning compiler with test files...\e[00m\n"
 	@if [ "$$TEST" != "" ]; then all_tests=$$TEST; \
-	else all_tests=test*.mc; fi; \
+	else all_tests=./tests/test*.mc; fi; \
 	RESULTP="\e[01;32mPASSED\e[00m"; \
 	RESULTF="\e[01;31mFAILED\e[00m"; \
 	for test in $$all_tests; do \
@@ -156,7 +156,7 @@ test: $(SRC)
 		elif [[ $$test =~ .*sanity.* ]]; then echo -e -n "\e[01;32m"; ttyp="san"; \
 		elif [[ $$test =~ .*warn.* ]]; then echo -e -n "\e[01;33m"; ttyp="war"; \
 		else echo -e -n "\e[01;36m"; ttyp="ok"; fi; \
-		RETURN=$$(grep "//RETURN:" "$$test"); \
+		RETURN=$$(grep "#RETURN:" "$$test"); \
 		RETURN=$${RETURN#*:}; \
 		RETURN=$$(echo "$$RETURN" | xargs); \
 		./$(SRC) < "$$test" 1>/dev/null 2>/dev/null; \
@@ -174,9 +174,9 @@ test: $(SRC)
 		elif [ "$(ASM)" == "true" ] && [ $$out -eq 0 ]; then \
 			outname=$$(basename $$test); \
 			outname=$${outname%.*}; \
-			mv output.asm "$${outname}.asm"; \
-			if [ -f $${outname}.asm.ok ]; then \
-				diff -w -B "$${outname}.asm" "$${outname}.asm.ok" > /dev/null; \
+			mv output.asm "asm_out/$${outname}.asm"; \
+			if [ -f asm_out/$${outname}.asm.ok ]; then \
+				diff -w -B "asm_out/$${outname}.asm" "asm_out/$${outname}.asm.ok" > /dev/null; \
 				if [ $$? -ne 0 ]; then \
 					if [[ $$ttyp == "san" ]]; then \
 						RESULT=$$RESULTF; \
@@ -185,7 +185,7 @@ test: $(SRC)
 					fi; \
 				fi; \
 			elif [ "$$RETURN" != "" ]; then \
-				RETVAL=$$(./hipsim -r -s 500 < "$${outname}.asm" 2>/dev/null); \
+				RETVAL=$$(./hipsim -r -s 500 < "asm_out/$${outname}.asm" 2>/dev/null); \
 				CODE=$$?; \
 				if [ $$CODE -ne 0 ]; then \
 					if [ $$CODE -eq 4 ]; then \

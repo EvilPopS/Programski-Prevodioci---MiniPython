@@ -53,8 +53,7 @@ void gen_sym_name(int index) {
 // OTHER
 
 void gen_cmp(int op1_index, int op2_index) {
-  if(get_type(op1_index) == NUM_BOOL)
-    code("\n\t\tCMPS \t");
+	code("\n\t\tCMPS \t");
 	gen_sym_name(op1_index);
 	code(",");
 	gen_sym_name(op2_index);
